@@ -54,6 +54,6 @@ const researcherSchema = new Schema<IResearcher>(
     }
 );
 
-const Researcher = model<IResearcher>("Researcher", researcherSchema);
+const ResearcherModel = model<IResearcher>("Researcher", researcherSchema);
 
-export default Researcher;
+export default ResearcherModel;

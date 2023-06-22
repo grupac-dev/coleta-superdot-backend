@@ -13,6 +13,6 @@ export default interface IResearcher {
     password_hash: string;
     role: string;
     instituition: string;
-    createdAt: Date;
-    updatedAt: Date;
+    createdAt?: Date;
+    updatedAt?: Date;
 }
