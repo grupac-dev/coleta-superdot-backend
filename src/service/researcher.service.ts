@@ -1,4 +1,4 @@
-import { Types } from "mongoose";
+import { FilterQuery, Types } from "mongoose";
 import IResearcher from "../interface/researcher.interface";
 import ResearcherModel from "../model/researcher.model";
 import { omit } from "lodash";
@@ -51,25 +51,15 @@ export async function deleteResearcher(
     }
 }
 
-export async function findByEmail(email: string): Promise<IResearcher> {
+export async function findResearcher(
+    query: FilterQuery<IResearcher>
+): Promise<IResearcher> {
     try {
-        const researcher = await ResearcherModel.findOne({ email }).exec();
+        const researcher = await ResearcherModel.findOne(query).lean().exec();
         if (!researcher) {
             throw new Error("Researcher is not found");
         }
-        return omit(researcher, "password_hash").toJSON();
-    } catch {
-        throw new Error("Is not possible found Researcher");
-    }
-}
-
-export async function findById(Id: Types.ObjectId): Promise<IResearcher> {
-    try {
-        const researcher = await ResearcherModel.findById(Id);
-        if (!researcher) {
-            throw new Error("Researcher is not found");
-        }
-        return omit(researcher, "password_hash").toJSON();
+        return omit(researcher, "password_hash");
     } catch {
         throw new Error("Is not possible found Researcher");
     }

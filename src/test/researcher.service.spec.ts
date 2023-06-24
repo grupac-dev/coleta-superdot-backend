@@ -4,13 +4,13 @@ import mongoose, { Types } from "mongoose";
 import {
     createResearcher,
     deleteResearcher,
-    findByEmail,
-    findById,
+    findResearcher,
     updateResearcher,
 } from "../service/researcher.service";
 import { DateTime } from "luxon";
 import IResearcher from "../interface/researcher.interface";
 import ResearcherModel from "../model/researcher.model";
+import { omit } from "lodash";
 
 describe("Researcher Service", function () {
     before(async () => {
@@ -103,25 +103,29 @@ describe("Researcher Service", function () {
 
                 expect(await ResearcherModel.findById(id).exec()).to.be.null;
 
-                return expect(researcherReturned).deep.equal(researcher);
+                return expect(researcherReturned).to.deep.equal(researcher);
             });
         });
 
         describe("Find Researcher", function () {
             describe("Find by id", function () {
                 it("When id exists should return a document", async function () {
-                    const researcherReturned = await findById(
-                        new Types.ObjectId(researcher._id)
+                    const researcherReturned = await findResearcher({
+                        _id: researcher._id,
+                    });
+                    expect(researcherReturned).to.deep.equal(
+                        omit(researcher, "password_hash")
                     );
-                    expect(researcherReturned).deep.equal(researcher);
                 });
             });
             describe("Find by email", function () {
                 it("When email exists should return a document", async function () {
-                    const researcherReturned = await findByEmail(
-                        researcher.email
+                    const researcherReturned = await findResearcher({
+                        email: researcher.email,
+                    });
+                    expect(researcherReturned).to.deep.equal(
+                        omit(researcher, "password_hash")
                     );
-                    expect(researcherReturned).deep.equal(researcher);
                 });
             });
         });
