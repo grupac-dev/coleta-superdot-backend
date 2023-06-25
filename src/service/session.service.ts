@@ -44,6 +44,21 @@ export function issueAccessToken(session: ISession) {
     return accessToken;
 }
 
+export function issueRefreshToken(session: ISession) {
+    const refreshToken = signJwt(
+        {
+            researcher_id: session.researcher_id,
+            session_id: session._id,
+        },
+        "REFRESH_TOKEN_PRIVATE_KEY",
+        {
+            expiresIn: env.REFRESH_TOKEN_TTL,
+        }
+    );
+
+    return refreshToken;
+}
+
 export async function reIssueAccessToken(refreshToken: string) {
     const { decoded } = verifyJwt(refreshToken, "REFRESH_TOKEN_PUBLIC_KEY");
 
