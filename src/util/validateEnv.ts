@@ -9,4 +9,6 @@ export default cleanEnv(process.env, {
     REFRESH_TOKEN_PUBLIC_KEY: str(),
     ACCESS_TOKEN_TTL: str(),
     REFRESH_TOKEN_TTL: str(),
+    MONGO_CONNECTION_STRING: str(),
+    PORT: num()
 });
