@@ -1,4 +1,4 @@
-import { FilterQuery, Types } from "mongoose";
+import { FilterQuery, Types, UpdateQuery } from "mongoose";
 import IResearcher from "../interface/researcher.interface";
 import ResearcherModel from "../model/researcher.model";
 import { omit } from "lodash";
@@ -9,28 +9,31 @@ export async function createResearcher(
 ): Promise<IResearcher> {
     try {
         const researcher = await ResearcherModel.create(researcherData);
-        return omit(researcher, "password_hash").toJSON();
-    } catch {
+        return omit(researcher.toJSON(), "password_hash");
+    } catch (e: any) {
+        console.error(e);
         throw new Error("Is not possible create Researcher Data");
     }
 }
 
 export async function updateResearcher(
-    researcherData: IResearcher
+    query: FilterQuery<IResearcher>,
+    update: UpdateQuery<IResearcher>
 ): Promise<IResearcher> {
-    if (!researcherData._id) {
-        throw new Error("Id is not defined");
-    }
     try {
-        const researcherUpdated = await ResearcherModel.findByIdAndUpdate(
-            researcherData._id,
-            researcherData,
-            { returnDocument: "after" }
+        const researcherUpdated = await ResearcherModel.findOneAndUpdate(
+            query,
+            update,
+            {
+                new: true,
+            }
         ).exec();
+
         if (!researcherUpdated) {
             throw new Error("Researcher is not found");
         }
-        return omit(researcherUpdated, "password_hash").toJSON();
+
+        return omit(researcherUpdated.toJSON(), "password_hash");
     } catch {
         throw new Error("Is not possible updated Researcher");
     }
@@ -46,7 +49,7 @@ export async function deleteResearcher(
         if (!researcherDeleted) {
             throw new Error("Researcher is not found");
         }
-        return omit(researcherDeleted, "password_hash").toJSON();
+        return omit(researcherDeleted.toJSON(), "password_hash");
     } catch {
         throw new Error("Is not possible delete Researcher");
     }
