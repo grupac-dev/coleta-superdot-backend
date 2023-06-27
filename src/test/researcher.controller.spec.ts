@@ -37,10 +37,6 @@ describe("Researcher Controller", function () {
         status: sinon.stub().returns({ json: spyJson }),
     };
 
-    afterEach(function () {
-        sinon.restore();
-    });
-
     it("should return 201 status and the researcher data without the password", async function () {
         sinon.stub(HashUtil, "hashContent").returns("password_hashed");
         sinon.stub(ResearcherService, "createResearcher").returns(

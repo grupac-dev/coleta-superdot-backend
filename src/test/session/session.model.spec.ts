@@ -1,25 +1,8 @@
-import { MongoMemoryServer } from "mongodb-memory-server";
-import mongoose from "mongoose";
 import ResearcherModel from "../../model/researcher.model";
-import chai, { expect, should } from "chai";
-import chaiAsPromise from "chai-as-promised";
+import { expect } from "chai";
 import SessionModel from "../../model/session.model";
 
-chai.use(chaiAsPromise);
-should();
-
 describe("Session model", () => {
-    before(async () => {
-        const mongoServer = await MongoMemoryServer.create();
-
-        await mongoose.connect(mongoServer.getUri());
-    });
-
-    after(async () => {
-        await mongoose.disconnect();
-        await mongoose.connection.close();
-    });
-
     describe("Creating session model", () => {
         it("should be saved on db", async () => {
             const modelData = {
@@ -30,7 +13,7 @@ describe("Session model", () => {
                     birth_date: "2023-06-21",
                     country_state: "Bahia",
                 },
-                email: "test@hotmail.com",
+                email: "test2@hotmail.com",
                 password_hash: "djasijd9j19dj2198udj9281jd",
                 role: "Pesquisador",
                 instituition: "IFBA",

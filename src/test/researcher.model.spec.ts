@@ -1,7 +1,5 @@
-import { MongoMemoryServer } from "mongodb-memory-server";
-import mongoose from "mongoose";
 import ResearcherModel from "../model/researcher.model";
-import chai, { assert, expect, should } from "chai";
+import chai, { expect, should } from "chai";
 import chaiAsPromise from "chai-as-promised";
 import { any } from "zod";
 
@@ -9,17 +7,6 @@ chai.use(chaiAsPromise);
 should();
 
 describe("Researcher model", () => {
-    before(async () => {
-        const mongoServer = await MongoMemoryServer.create();
-
-        await mongoose.connect(mongoServer.getUri());
-    });
-
-    after(async () => {
-        await mongoose.disconnect();
-        await mongoose.connection.close();
-    });
-
     describe("Creating model", () => {
         it("should be saved on db", async () => {
             const modelData = {

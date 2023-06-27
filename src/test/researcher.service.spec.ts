@@ -1,5 +1,4 @@
-import { assert, expect } from "chai";
-import { MongoMemoryServer } from "mongodb-memory-server";
+import { expect } from "chai";
 import mongoose, { Types } from "mongoose";
 import {
     createResearcher,
@@ -13,17 +12,6 @@ import ResearcherModel from "../model/researcher.model";
 import { omit } from "lodash";
 
 describe("Researcher Service", function () {
-    before(async () => {
-        const mongoServer = await MongoMemoryServer.create();
-
-        await mongoose.connect(mongoServer.getUri());
-    });
-
-    after(async () => {
-        await mongoose.disconnect();
-        await mongoose.connection.close();
-    });
-
     describe("Create Researcher", function () {
         it("Should save and return the document", async () => {
             const researcherData = {
@@ -51,7 +39,6 @@ describe("Researcher Service", function () {
                         country_state: "Bahia",
                     },
                     email: "test@hotmail.com",
-                    password_hash: "djasijd9j19dj2198udj9281jd",
                     role: "Pesquisador",
                     instituition: "IFBA",
                 },
@@ -63,8 +50,7 @@ describe("Researcher Service", function () {
     describe("Manipulate Research Data", function () {
         let researcher: IResearcher;
 
-        beforeEach("create de researcher data", async () => {
-            await mongoose.connection.dropCollection("researchers");
+        beforeEach("create the researcher data", async () => {
             researcher = await createResearcher({
                 personal_data: {
                     full_name: "Felipe Pereira",
@@ -83,11 +69,13 @@ describe("Researcher Service", function () {
         describe("Update Researcher", function () {
             it("Should update and return the document", async function () {
                 let newResearcher = researcher;
+
                 newResearcher.personal_data.full_name = "Neymar";
 
-                const researcherReturned = await updateResearcher(
-                    newResearcher
-                );
+                const researcherReturned = await updateResearcher({
+                    _id: researcher._id,
+                    ...newResearcher,
+                });
 
                 return expect(researcherReturned.personal_data.full_name).equal(
                     "NEYMAR"
@@ -103,7 +91,18 @@ describe("Researcher Service", function () {
 
                 expect(await ResearcherModel.findById(id).exec()).to.be.null;
 
-                return expect(researcherReturned).to.deep.equal(researcher);
+                return expect(researcherReturned).to.deep.include({
+                    personal_data: {
+                        full_name: "FELIPE PEREIRA",
+                        phone: "9999999",
+                        profile_photo: "photo.png",
+                        birth_date: DateTime.fromISO("2023-06-21").toJSDate(),
+                        country_state: "Bahia",
+                    },
+                    email: "test@hotmail.com",
+                    role: "Pesquisador",
+                    instituition: "IFBA",
+                });
             });
         });
 

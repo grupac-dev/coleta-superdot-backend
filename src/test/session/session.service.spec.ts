@@ -1,27 +1,16 @@
 import { expect } from "chai";
-import { MongoMemoryServer } from "mongodb-memory-server";
 import mongoose, { Types } from "mongoose";
 import { createResearcher } from "../../service/researcher.service";
 import { DateTime } from "luxon";
 import { createSession, issueAccessToken } from "../../service/session.service";
 import IResearcher from "../../interface/researcher.interface";
 import { verifyJwt } from "../../util/jwt";
+import SessionModel from "../../model/session.model";
+import ResearcherModel from "../../model/researcher.model";
 
 describe("Session Service", function () {
-    before(async () => {
-        const mongoServer = await MongoMemoryServer.create();
-
-        await mongoose.connect(mongoServer.getUri());
-    });
-
-    after(async () => {
-        await mongoose.disconnect();
-        await mongoose.connection.close();
-    });
-
     let researcher: IResearcher;
     beforeEach(async function () {
-        await mongoose.connection.dropCollection("researchers");
         researcher = await createResearcher({
             personal_data: {
                 full_name: "Felipe Pereira",
