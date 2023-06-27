@@ -2,9 +2,9 @@
   "name": "backend",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "build/server.js",
   "scripts": {
-    "start": "ts-node-dev --respawn --transpile-only src/app.ts",
+    "start": "nodemon -r dotenv/config src/server.ts",
     "test": "mocha --exit",
     "build": "tsc"
   },
@@ -23,16 +23,20 @@
     "@types/mocha": "^10.0.1",
     "@types/mongodb-memory-server": "^2.3.0",
     "@types/mongoose": "^5.11.97",
+    "@types/multer": "^1.4.7",
     "@types/sinon": "^10.0.15",
     "@types/sinon-chai": "^3.2.9",
+    "@types/supertest": "^2.0.12",
+    "@types/validator": "^13.7.17",
     "chai": "^4.3.7",
-    "chai-as-promised": "^7.1.1",
     "luxon": "^3.3.0",
     "mocha": "^10.2.0",
     "mongodb-memory-server": "^8.13.0",
+    "nodemon": "^2.0.22",
     "sinon": "^15.2.0",
     "sinon-chai": "^3.7.0",
-    "ts-node-dev": "^2.0.0",
+    "supertest": "^6.3.3",
+    "ts-node": "^10.9.1",
     "typescript": "^5.1.3"
   },
   "dependencies": {
@@ -44,6 +48,8 @@
     "jsonwebtoken": "^9.0.0",
     "lodash": "^4.17.21",
     "mongoose": "^7.3.0",
+    "multer": "^1.4.5-lts.1",
+    "validator": "^13.9.0",
     "zod": "^3.21.4"
   }
 }
