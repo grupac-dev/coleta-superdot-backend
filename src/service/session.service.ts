@@ -18,8 +18,11 @@ export async function createSession(
     return session.toJSON();
 }
 
-export async function findSessions(query: FilterQuery<ISession>) {
-    return SessionModel.find(query).lean().exec();
+export async function findSessionById(id: string): Promise<ISession | null> {
+    if (!Types.ObjectId.isValid(id)) {
+        throw Error("Invalid Session id!");
+    }
+    return SessionModel.findById(id).lean().exec();
 }
 
 export async function updateSession(
@@ -32,8 +35,7 @@ export async function updateSession(
 export function issueAccessToken(session: ISession) {
     const accessToken = signJwt(
         {
-            researcher_id: session.researcher_id,
-            session_id: session._id,
+            session: session._id,
         },
         "ACCESS_TOKEN_PRIVATE_KEY",
         {
@@ -47,8 +49,7 @@ export function issueAccessToken(session: ISession) {
 export function issueRefreshToken(session: ISession) {
     const refreshToken = signJwt(
         {
-            researcher_id: session.researcher_id,
-            session_id: session._id,
+            session: session._id,
         },
         "REFRESH_TOKEN_PRIVATE_KEY",
         {
@@ -74,8 +75,7 @@ export async function reIssueAccessToken(refreshToken: string) {
 
     const accessToken = signJwt(
         {
-            researcher_id: researcher._id,
-            session_id: session._id,
+            session: session._id,
         },
         "ACCESS_TOKEN_PRIVATE_KEY",
         {

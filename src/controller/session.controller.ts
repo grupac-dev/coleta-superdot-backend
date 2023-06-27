@@ -28,7 +28,7 @@ export async function createSessionHandler(
 }
 
 export async function deleteSessionHandler(req: Request, res: Response) {
-    const sessionId = get(res.locals, "current_session.session_id");
+    const sessionId = get(res.locals, "session._id");
 
     if (!sessionId) {
         throw createHttpError(403, "Invalid session");

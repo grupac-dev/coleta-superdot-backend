@@ -12,6 +12,7 @@ export const validateDTO =
             });
             next();
         } catch (e: any) {
+            console.error(e);
             res.status(400).send(e.errors);
         }
     };

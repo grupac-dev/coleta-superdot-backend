@@ -1,8 +1,9 @@
 import express from "express";
 import { validateDTO } from "../middleware/validateDTO.middleware";
 import * as ResearcherController from "../controller/researcher.controller";
-import { createResearcherDTO } from "../dto/createResearcher.dto";
-import { updateResearcherDTO } from "../dto/updateResearcher.dto";
+import { createResearcherDTO } from "../dto/researcher.dto";
+import { updateResearcherDTO } from "../dto/researcher.dto";
+import { requireActiveSession } from "../middleware/requireActiveSession.middleware";
 
 const researcherRouter = express.Router();
 
@@ -14,7 +15,7 @@ researcherRouter.post(
 
 researcherRouter.put(
     "/update-researcher",
-    validateDTO(updateResearcherDTO),
+    [validateDTO(updateResearcherDTO), requireActiveSession],
     ResearcherController.updateResearcherHandler
 );
 
