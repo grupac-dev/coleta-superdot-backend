@@ -76,7 +76,7 @@ describe("Researcher model", () => {
                 };
 
                 const newModel = new ResearcherModel(modelData);
-                return expect(newModel.save()).to.be.rejected;
+                expect(newModel.save()).to.be.rejected;
             });
         });
     });

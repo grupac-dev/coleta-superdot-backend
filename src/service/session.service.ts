@@ -1,0 +1,72 @@
+import { FilterQuery, Types, UpdateQuery } from "mongoose";
+import SessionModel from "../model/session.model";
+import ISession from "../interface/session.interface";
+import { signJwt, verifyJwt } from "../util/jwt";
+import { get } from "lodash";
+import { findResearcher } from "./researcher.service";
+import env from "../util/validateEnv";
+
+export async function createSession(
+    researcherId: Types.ObjectId,
+    userAgent: string
+): Promise<ISession> {
+    const session = await SessionModel.create({
+        researcher_id: researcherId,
+        userAgent,
+    });
+
+    return session.toJSON();
+}
+
+export async function findSessions(query: FilterQuery<ISession>) {
+    return SessionModel.find(query).lean().exec();
+}
+
+export async function updateSession(
+    query: FilterQuery<ISession>,
+    update: UpdateQuery<ISession>
+) {
+    return SessionModel.updateOne(query, update).exec();
+}
+
+export function issueAccessToken(session: ISession) {
+    const accessToken = signJwt(
+        {
+            researcher_id: session.researcher_id,
+            session_id: session._id,
+        },
+        "ACCESS_TOKEN_PRIVATE_KEY",
+        {
+            expiresIn: env.ACCESS_TOKEN_TTL,
+        }
+    );
+
+    return accessToken;
+}
+
+export async function reIssueAccessToken(refreshToken: string) {
+    const { decoded } = verifyJwt(refreshToken, "REFRESH_TOKEN_PUBLIC_KEY");
+
+    if (!decoded || !get(decoded, "session")) return false;
+
+    const session = await SessionModel.findById(get(decoded, "session"));
+
+    if (!session || !session.valid) return false;
+
+    const researcher = await findResearcher({ _id: session.researcher_id });
+
+    if (!researcher) return false;
+
+    const accessToken = signJwt(
+        {
+            researcher_id: researcher._id,
+            session_id: session._id,
+        },
+        "ACCESS_TOKEN_PRIVATE_KEY",
+        {
+            expiresIn: env.ACCESS_TOKEN_TTL,
+        }
+    );
+
+    return accessToken;
+}

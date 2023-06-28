@@ -17,7 +17,7 @@ const researcherSchema = new Schema<IResearcher>(
             profile_photo: String,
             birth_date: {
                 type: Date,
-                required: [true, "Phone number is required"],
+                required: [true, "Birth date is required"],
             },
             country_state: {
                 type: String,
@@ -31,6 +31,7 @@ const researcherSchema = new Schema<IResearcher>(
                 /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/,
                 "E-mail should be valid",
             ],
+            unique: true,
             trim: true,
             lowercase: true,
             required: [true, "Email is required"],
@@ -54,6 +55,6 @@ const researcherSchema = new Schema<IResearcher>(
     }
 );
 
-const Researcher = model<IResearcher>("Researcher", researcherSchema);
+const ResearcherModel = model<IResearcher>("Researcher", researcherSchema);
 
-export default Researcher;
+export default ResearcherModel;

@@ -10,9 +10,9 @@ export default interface IResearcher {
         country_state: string;
     };
     email: string;
-    password_hash: string;
+    password_hash?: string;
     role: string;
     instituition: string;
-    createdAt: Date;
-    updatedAt: Date;
+    createdAt?: Date;
+    updatedAt?: Date;
 }

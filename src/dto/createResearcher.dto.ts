@@ -1,6 +1,6 @@
 import { object, string, date } from "zod";
 
-export const createResearcherDTO = object({
+export const CreateResearcherDTO = object({
     body: object({
         personal_data: object({
             full_name: string({
