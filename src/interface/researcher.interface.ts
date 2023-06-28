@@ -1,7 +1,7 @@
 import { Types } from "mongoose";
 
 export default interface IResearcher {
-    _id?: Types.ObjectId;
+    _id?: string;
     personal_data: {
         full_name: string;
         phone: string;
@@ -11,7 +11,7 @@ export default interface IResearcher {
     };
     email: string;
     password_hash?: string;
-    role: string;
+    role?: string;
     instituition: string;
     createdAt?: Date;
     updatedAt?: Date;

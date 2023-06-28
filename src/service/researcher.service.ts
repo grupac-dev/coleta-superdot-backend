@@ -2,6 +2,7 @@ import { FilterQuery, Types } from "mongoose";
 import IResearcher from "../interface/researcher.interface";
 import ResearcherModel from "../model/researcher.model";
 import { omit } from "lodash";
+import { compareHashes } from "../util/hash";
 
 export async function createResearcher(
     researcherData: IResearcher
@@ -63,4 +64,29 @@ export async function findResearcher(
     } catch {
         throw new Error("Is not possible found Researcher");
     }
+}
+
+export async function validatePassword({
+    email,
+    password,
+}: {
+    email: string;
+    password: string;
+}): Promise<IResearcher | Boolean> {
+    const researcher = await ResearcherModel.findOne({ email });
+
+    if (!researcher) {
+        return false;
+    }
+
+    const isValid = await compareHashes(
+        password,
+        researcher.password_hash || ""
+    );
+
+    if (!isValid) {
+        return false;
+    }
+
+    return omit(researcher.toJSON(), "password_hash");
 }

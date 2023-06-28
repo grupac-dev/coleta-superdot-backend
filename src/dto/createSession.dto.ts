@@ -1,4 +1,4 @@
-import { object, string } from "zod";
+import { object, string, z } from "zod";
 
 export const createSessionDTO = object({
     body: object({
@@ -10,3 +10,5 @@ export const createSessionDTO = object({
         }).min(8, "Password too short - should be 8 chars minimium"),
     }),
 });
+
+export type CreateSessionDTO = z.infer<typeof createSessionDTO>;

@@ -1,6 +1,6 @@
-import { object, string, date } from "zod";
+import { object, string, date, z, TypeOf } from "zod";
 
-export const CreateResearcherDTO = object({
+export const createResearcherDTO = object({
     body: object({
         personal_data: object({
             full_name: string({
@@ -14,7 +14,7 @@ export const CreateResearcherDTO = object({
                 required_error: "Birth date is required",
                 invalid_type_error: "That's not a date!",
             }),
-            countryState: string({
+            country_state: string({
                 required_error: "Country state is required",
             }).trim(),
         }),
@@ -37,3 +37,5 @@ export const CreateResearcherDTO = object({
         message: "Passwords do not match",
     }),
 });
+
+export type CreateResearcherDTO = z.infer<typeof createResearcherDTO>;
