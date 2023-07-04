@@ -1,5 +1,5 @@
 import { DateTime } from "luxon";
-import isDate from "validator/lib/isDate";
+import validator from "validator";
 
 import { object, string, z, optional } from "zod";
 
@@ -15,7 +15,7 @@ export const researcherBodyDTO = object({
         birth_date: string({
             required_error: "Birth date is required",
         }).transform((val, ctx) => {
-            if (!isDate(val)) {
+            if (!validator.isISO8601(val)) {
                 ctx.addIssue({
                     code: z.ZodIssueCode.custom,
                     message: "Invalid date!",
@@ -45,25 +45,17 @@ export const researcherBodyDTO = object({
     }).trim(),
 });
 
-export const createResearcherDTO = object({
-    body: researcherBodyDTO.refine(
-        (data) => data.password === data.password_confirmation,
-        {
-            message: "Passwords do not match",
-            path: ["password_confirmation"],
-        }
-    ),
+export const researcherDTO = object({
+    body: researcherBodyDTO.refine((data) => data.password === data.password_confirmation, {
+        message: "Passwords do not match",
+        path: ["password_confirmation"],
+    }),
 });
 
 export const updateResearcherDTO = object({
     body: researcherBodyDTO
         .extend({
-            password: optional(
-                string().min(
-                    8,
-                    "Password too short - should be 8 chars minimium"
-                )
-            ),
+            password: optional(string().min(8, "Password too short - should be 8 chars minimium")),
             password_confirmation: optional(string()),
         })
         .refine(
@@ -80,5 +72,5 @@ export const updateResearcherDTO = object({
         ),
 });
 
-export type CreateResearcherDTO = z.infer<typeof createResearcherDTO>;
+export type ResearcherDTO = z.infer<typeof researcherDTO>;
 export type UpdateResearcherDTO = z.infer<typeof updateResearcherDTO>;
