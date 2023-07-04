@@ -1,6 +1,6 @@
 import { object, string, z } from "zod";
 
-export const createSessionDTO = object({
+export const loginDTO = object({
     body: object({
         email: string({
             required_error: "Email is required!",
@@ -11,4 +11,4 @@ export const createSessionDTO = object({
     }),
 });
 
-export type CreateSessionDTO = z.infer<typeof createSessionDTO>;
+export type LoginDTO = z.infer<typeof loginDTO>;
