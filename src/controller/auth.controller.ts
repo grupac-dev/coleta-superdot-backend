@@ -4,13 +4,11 @@ import * as ResearcherService from "../service/researcher.service";
 import * as SessionService from "../service/session.service";
 import { hashContent } from "../util/hash";
 import IResearcher from "../interface/researcher.interface";
-import { UpdateResearcherDTO } from "../dto/researcher.dto";
 import { get } from "lodash";
-import { DateTime } from "luxon";
 import env from "../util/validateEnv";
 import { Types } from "mongoose";
-import { LoginDTO } from "../dto/login.dto";
-import ISession from "../interface/session.interface";
+import { LoginDTO, SetUserRoleDTO } from "../dto/auth.dto";
+import { UserRoleDTO } from "../dto/auth.dto";
 
 export async function registerHandler(req: Request<{}, {}, ResearcherDTO["body"], {}>, res: Response) {
     try {
@@ -70,12 +68,39 @@ export async function loginHandler(req: Request<{}, {}, LoginDTO["body"], {}>, r
 
 export async function isValidSession(req: Request, res: Response) {
     try {
-        const session = await SessionService.findSessionById(get(res.locals, "session"));
-        console.log(session);
-
+        const session = res.locals.session;
         res.status(200).json({ valid: session?.valid });
     } catch (e) {
         console.error(e);
         res.status(200).json({ valid: false });
+    }
+}
+
+export async function userRoleHandler(req: Request<UserRoleDTO["params"], {}, {}, {}>, res: Response) {
+    try {
+        const { userId } = req.params;
+        const role = await ResearcherService.getResearcherRole(userId);
+
+        console.log(role);
+        res.status(200).send(role);
+    } catch (e) {
+        console.error(e);
+        res.status(500).send("Unknown error.");
+    }
+}
+
+export async function setUserRoleHandler(req: Request<{}, {}, SetUserRoleDTO["body"], {}>, res: Response) {
+    try {
+        const { userId, newRole, emailMessage } = req.body;
+        await ResearcherService.updateResearcher({ _id: userId }, { role: newRole });
+
+        if (emailMessage) {
+            console.log(emailMessage);
+        }
+
+        res.status(200).end();
+    } catch (e) {
+        console.error(e);
+        res.status(500).send("Unknown error.");
     }
 }
