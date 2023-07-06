@@ -1,7 +1,7 @@
 import { DateTime } from "luxon";
 import validator from "validator";
 
-import { object, string, z, optional } from "zod";
+import { object, string, z, optional, number } from "zod";
 
 export const researcherBodyDTO = object({
     personal_data: object({
@@ -45,6 +45,21 @@ export const researcherBodyDTO = object({
     }).trim(),
 });
 
+export const paginateResearcherParams = object({
+    currentPage: string(),
+    itemsPerPage: string().optional(),
+});
+
+export const paginateResearcherQuery = object({
+    user_name: string().optional(),
+    user_email: string().optional(),
+});
+
+export const paginateResearcherDTO = object({
+    params: paginateResearcherParams,
+    query: paginateResearcherQuery,
+});
+
 export const researcherDTO = object({
     body: researcherBodyDTO.refine((data) => data.password === data.password_confirmation, {
         message: "Passwords do not match",
@@ -74,3 +89,4 @@ export const updateResearcherDTO = object({
 
 export type ResearcherDTO = z.infer<typeof researcherDTO>;
 export type UpdateResearcherDTO = z.infer<typeof updateResearcherDTO>;
+export type PaginateResearcherDTO = z.infer<typeof paginateResearcherDTO>;

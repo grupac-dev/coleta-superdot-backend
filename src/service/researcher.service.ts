@@ -1,12 +1,10 @@
-import { FilterQuery, Types, UpdateQuery } from "mongoose";
+import { FilterQuery, QueryOptions, Types, UpdateQuery } from "mongoose";
 import IResearcher from "../interface/researcher.interface";
 import ResearcherModel from "../model/researcher.model";
 import { omit } from "lodash";
 import { compareHashes } from "../util/hash";
 
-export async function createResearcher(
-    researcherData: IResearcher
-): Promise<IResearcher> {
+export async function createResearcher(researcherData: IResearcher): Promise<IResearcher> {
     try {
         const researcher = await ResearcherModel.create(researcherData);
         return omit(researcher.toJSON(), "password_hash");
@@ -18,16 +16,11 @@ export async function createResearcher(
 
 export async function updateResearcher(
     query: FilterQuery<IResearcher>,
-    update: UpdateQuery<IResearcher>
+    update: UpdateQuery<IResearcher>,
+    options: QueryOptions = {}
 ): Promise<IResearcher> {
     try {
-        const researcherUpdated = await ResearcherModel.findOneAndUpdate(
-            query,
-            update,
-            {
-                new: true,
-            }
-        ).exec();
+        const researcherUpdated = await ResearcherModel.findOneAndUpdate(query, update, options).exec();
 
         if (!researcherUpdated) {
             throw new Error("Researcher is not found");
@@ -39,13 +32,9 @@ export async function updateResearcher(
     }
 }
 
-export async function deleteResearcher(
-    researcherId: Types.ObjectId
-): Promise<IResearcher> {
+export async function deleteResearcher(researcherId: Types.ObjectId): Promise<IResearcher> {
     try {
-        const researcherDeleted = await ResearcherModel.findByIdAndDelete(
-            researcherId
-        ).exec();
+        const researcherDeleted = await ResearcherModel.findByIdAndDelete(researcherId).exec();
         if (!researcherDeleted) {
             throw new Error("Researcher is not found");
         }
@@ -55,9 +44,45 @@ export async function deleteResearcher(
     }
 }
 
-export async function findResearcher(
-    query: FilterQuery<IResearcher>
-): Promise<IResearcher> {
+export async function paginateResearchers(
+    currentPage: number,
+    itemsPerPage: number,
+    filter: { user_name?: string; user_email?: string },
+    currentResearcherId: string
+) {
+    try {
+        const query = ResearcherModel.find(
+            {
+                $and: [
+                    filter.user_name ? { "personal_data.full_name": RegExp(filter.user_name, "i") } : {},
+                    filter.user_email ? { email: RegExp(filter.user_email, "i") } : {},
+                ],
+            },
+            {
+                "personal_data.full_name": true,
+                email: true,
+            }
+        )
+            .where("_id")
+            .ne(currentResearcherId)
+            .limit(itemsPerPage * currentPage)
+            .skip((currentPage - 1) * itemsPerPage);
+
+        const researchers = await query.exec();
+
+        const totalResearchers = await ResearcherModel.countDocuments(query);
+
+        return {
+            researchers,
+            totalResearchers,
+        };
+    } catch (error) {
+        console.error(error);
+        throw new Error("Cannot paginate researchers.");
+    }
+}
+
+export async function findResearcher(query: FilterQuery<IResearcher>): Promise<IResearcher> {
     try {
         const researcher = await ResearcherModel.findOne(query).lean().exec();
         if (!researcher) {
@@ -82,14 +107,25 @@ export async function validatePassword({
         return false;
     }
 
-    const isValid = await compareHashes(
-        password,
-        researcher.password_hash || ""
-    );
+    const isValid = await compareHashes(password, researcher.password_hash || "");
 
     if (!isValid) {
         return false;
     }
 
     return omit(researcher.toJSON(), "password_hash");
+}
+
+export async function getResearcherRole(id: string): Promise<string | undefined> {
+    try {
+        const researcher = await ResearcherModel.findById(id, { role: true }).lean().exec();
+        if (!researcher) {
+            throw new Error("Researcher not found");
+        }
+        console.log(researcher);
+        return researcher.role;
+    } catch (error) {
+        console.error(error);
+        throw new Error("Unknown error");
+    }
 }

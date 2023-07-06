@@ -3,7 +3,8 @@ import { validateDTO } from "../middleware/validateDTO.middleware";
 import * as AuthController from "../controller/auth.controller";
 import { researcherDTO } from "../dto/researcher.dto";
 import { uploaderConfig } from "../util/uploader";
-import { loginDTO } from "../dto/login.dto";
+import { loginDTO, setUserRoleDTO, userRoleDTO } from "../dto/auth.dto";
+import { requireRole } from "../middleware/requireRole.middleware";
 
 const authRouter = express.Router();
 
@@ -16,5 +17,17 @@ authRouter.post(
 authRouter.post("/login", [validateDTO(loginDTO)], AuthController.loginHandler);
 
 authRouter.get("/isValidSession", AuthController.isValidSession);
+
+authRouter.get(
+    "/userRole/:userId",
+    [validateDTO(userRoleDTO), requireRole("Administrador")],
+    AuthController.userRoleHandler
+);
+
+authRouter.patch(
+    "/setUserRole",
+    [validateDTO(setUserRoleDTO), requireRole("Administrador")],
+    AuthController.setUserRoleHandler
+);
 
 export { authRouter };

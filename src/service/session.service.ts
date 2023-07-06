@@ -6,10 +6,7 @@ import { get } from "lodash";
 import { findResearcher } from "./researcher.service";
 import env from "../util/validateEnv";
 
-export async function createSession(
-    researcherId: Types.ObjectId,
-    userAgent: string
-): Promise<ISession> {
+export async function createSession(researcherId: Types.ObjectId, userAgent: string): Promise<ISession> {
     const session = await SessionModel.create({
         researcher_id: researcherId,
         userAgent,
@@ -25,10 +22,7 @@ export async function findSessionById(id: string): Promise<ISession | null> {
     return SessionModel.findById(id).lean().exec();
 }
 
-export async function updateSession(
-    query: FilterQuery<ISession>,
-    update: UpdateQuery<ISession>
-) {
+export async function updateSession(query: FilterQuery<ISession>, update: UpdateQuery<ISession>) {
     return SessionModel.updateOne(query, update).exec();
 }
 

@@ -33,7 +33,12 @@ export const deserializeSession = async (req: Request, res: Response, next: Next
 
         const result = verifyJwt(newAccessToken as string, "ACCESS_TOKEN_PUBLIC_KEY");
 
-        res.locals.session = result.decoded;
+        try {
+            const session = await SessionService.findSessionById(get(result.decoded, "session") || "");
+            res.locals.session = session;
+        } catch (error) {
+            console.error(error);
+        }
         return next();
     }
 
