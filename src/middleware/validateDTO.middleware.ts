@@ -1,5 +1,4 @@
 import { NextFunction, Request, Response } from "express";
-import { get } from "lodash";
 import { AnyZodObject } from "zod";
 
 export const validateDTO = (schema: AnyZodObject) => (req: Request, res: Response, next: NextFunction) => {
