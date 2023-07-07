@@ -1,4 +1,4 @@
-import { Types } from "mongoose";
+import ISample from "./sample.interface";
 
 export default interface IResearcher {
     _id?: string;
@@ -13,6 +13,7 @@ export default interface IResearcher {
     password_hash?: string;
     role?: string;
     instituition: string;
+    research_samples?: [ISample];
     createdAt?: Date;
     updatedAt?: Date;
 }
