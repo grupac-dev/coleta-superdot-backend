@@ -15,7 +15,7 @@ researcherRouter.put(
 
 researcherRouter.get(
     "/paginate/:itemsPerPage/page/:currentPage",
-    requireRole("Administrador"),
+    [validateDTO(paginateResearcherDTO), requireRole("Administrador")],
     ResearcherController.paginateResearchers
 );
 
