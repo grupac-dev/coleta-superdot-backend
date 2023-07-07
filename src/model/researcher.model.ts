@@ -1,5 +1,6 @@
-import { Schema, model } from "mongoose";
+import { Schema, Types, model } from "mongoose";
 import IResearcher from "../interface/researcher.interface";
+import { sampleSchema } from "./schemas/sample.schema";
 
 const researcherSchema = new Schema<IResearcher>(
     {
@@ -49,6 +50,7 @@ const researcherSchema = new Schema<IResearcher>(
             type: String,
             required: [true, "Instituition is required"],
         },
+        research_samples: [sampleSchema],
     },
     {
         timestamps: true,

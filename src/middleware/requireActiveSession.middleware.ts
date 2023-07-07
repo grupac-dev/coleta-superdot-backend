@@ -1,11 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import { get } from "lodash";
 
-export const requireActiveSession = (
-    req: Request,
-    res: Response,
-    next: NextFunction
-) => {
+export const requireActiveSession = (req: Request<{}, {}, {}, {}>, res: Response, next: NextFunction) => {
     const sessionValid = get(res.locals, "session.valid");
 
     if (!sessionValid) {
