@@ -17,7 +17,7 @@ export const uploaderConfig = multer({
     limits: { fileSize: 10 * 1024 * 1024 },
     fileFilter(req, file, callback) {
         const extension: boolean =
-            [".png", ".jpg", "jpeg", "pdf"].indexOf(path.extname(file.originalname).toLowerCase()) >= 0;
+            [".png", ".jpg", ".jpeg", ".pdf"].indexOf(path.extname(file.originalname).toLowerCase()) >= 0;
         const mimeType: boolean =
             ["image/png", "image/jpg", "image/jpeg", "application/pdf"].indexOf(file.mimetype) >= 0;
 
