@@ -1,4 +1,4 @@
-import { Schema, Types, model } from "mongoose";
+import { Schema, model } from "mongoose";
 import IResearcher from "../interface/researcher.interface";
 import { sampleSchema } from "./schemas/sample.schema";
 
