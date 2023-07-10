@@ -7,6 +7,7 @@ import morgan from "morgan";
 import { authRouter } from "./route/auth.route";
 import { sampleGroupRouter } from "./route/sampleGroup.route";
 import { sampleRouter } from "./route/sample.route";
+import { sampleReviewRouter } from "./route/sampleReview.route";
 
 const app = express();
 
@@ -25,6 +26,8 @@ app.use("/api/researcher", researcherRouter);
 app.use("/api/sampleGroup", sampleGroupRouter);
 
 app.use("/api/sample", sampleRouter);
+
+app.use("/api/sampleReview", sampleReviewRouter);
 
 app.use((req, res, next) => {
     next(createHttpError(404, "Endpoint not found"));

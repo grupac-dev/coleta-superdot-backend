@@ -1,4 +1,5 @@
-import { number, object, string, z } from "zod";
+import { object, string, z } from "zod";
+import { INSTITUITION_TYPE_ARRAY, SAMPLE_STATUS_ARRAY } from "../util/consts";
 
 const createSampleBody = object({
     research_title: string({
@@ -31,7 +32,7 @@ const createSampleBody = object({
         name: string({
             required_error: "Sample instituition name is required.",
         }),
-        type: z.enum(["Pública", "Particular"], {
+        instType: z.enum(INSTITUITION_TYPE_ARRAY, {
             required_error: "Sample instituition type is required.",
         }),
     }),
@@ -46,8 +47,13 @@ export const createSampleDTO = object({
     body: createSampleBody,
 });
 
+export const paginateSampleQuery = object({
+    status: z.enum(["", ...SAMPLE_STATUS_ARRAY]),
+});
+
 export const paginateSampleDTO = object({
     params: paginateSampleParams,
+    query: paginateSampleQuery,
 });
 
 export type CreateSampleDTO = z.infer<typeof createSampleDTO>;

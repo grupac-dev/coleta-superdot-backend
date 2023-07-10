@@ -4,6 +4,8 @@ import { requireActiveSession } from "../middleware/requireActiveSession.middlew
 import { createSampleDTO, paginateSampleDTO } from "../dto/sample.dto";
 import { validateDTO } from "../middleware/validateDTO.middleware";
 import { uploaderConfig } from "../util/uploader";
+import { requireRole } from "../middleware/requireRole.middleware";
+import { protectResource } from "../middleware/protectResource.middleware";
 
 const sampleRouter = express.Router();
 
@@ -24,7 +26,15 @@ sampleRouter.post(
 sampleRouter.get(
     "/paginate/:itemsPerPage/page/:currentPage",
     [validateDTO(paginateSampleDTO), requireActiveSession],
-    SampleController.paginateSamples
+    SampleController.paginateResearcherSamples
 );
+
+sampleRouter.get(
+    "/paginateAll/:itemsPerPage/page/:currentPage",
+    [validateDTO(paginateSampleDTO), requireRole("Revisor")],
+    SampleController.paginateAllSamples
+);
+
+sampleRouter.use("/attachment", protectResource, express.static("src/storage/uploads"));
 
 export { sampleRouter };

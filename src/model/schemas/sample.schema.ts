@@ -1,5 +1,7 @@
 import { Schema } from "mongoose";
 import ISample from "../../interface/sample.interface";
+import { sampleReviewSchema } from "./sampleReview.schema";
+import { INSTITUITION_TYPE_ARRAY, SAMPLE_STATUS_ARRAY } from "../../util/consts";
 
 export const sampleSchema = new Schema<ISample>(
     {
@@ -19,7 +21,7 @@ export const sampleSchema = new Schema<ISample>(
             type: Number,
             required: [true, "Is necessary to inform the sample partcipants quantity requested."],
         },
-        qtt_participantes_authorized: Number,
+        qtt_participants_authorized: Number,
         research_cep: {
             cep_code: {
                 type: String,
@@ -37,7 +39,7 @@ export const sampleSchema = new Schema<ISample>(
         },
         status: {
             type: String,
-            enum: ["Autorizado", "Pendente", "Não Autorizado"],
+            enum: SAMPLE_STATUS_ARRAY,
             required: [true, "A status is required."],
         },
         country_region: {
@@ -57,12 +59,13 @@ export const sampleSchema = new Schema<ISample>(
                 type: String,
                 required: [true, "Sample instituition name is required."],
             },
-            type: {
+            instType: {
                 type: String,
-                enum: ["Pública", "Particular"],
+                enum: INSTITUITION_TYPE_ARRAY,
                 required: [true, "Sample instituition type is required."],
             },
         },
+        reviews: [sampleReviewSchema],
     },
     {
         timestamps: true,
