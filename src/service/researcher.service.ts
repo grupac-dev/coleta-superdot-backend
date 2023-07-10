@@ -122,10 +122,25 @@ export async function getResearcherRole(id: string): Promise<string | undefined>
         if (!researcher) {
             throw new Error("Researcher not found");
         }
-        console.log(researcher);
         return researcher.role;
     } catch (error) {
         console.error(error);
         throw new Error("Unknown error");
     }
+}
+
+export async function isAttachmentOwner(fileName: string, researcherId: string) {
+    const researcher = await ResearcherModel.findOne({
+        $or: [
+            { "research_samples.research_cep.research_document": fileName },
+            { "research_samples.research_cep.tcle_document": fileName },
+            { "research_samples.research_cep.tale_document": fileName },
+        ],
+    });
+
+    if (researcher?._id.toString() !== researcherId.toString()) {
+        return false;
+    }
+
+    return true;
 }
