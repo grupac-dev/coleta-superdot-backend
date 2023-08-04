@@ -4,7 +4,7 @@ import { getResearcherRole } from "../service/researcher.service";
 export const requireRole =
     (roleRequired: "Revisor" | "Administrador") => async (req: Request, res: Response, next: NextFunction) => {
         try {
-            const researcherRole = await getResearcherRole(res.locals.session?.researcher_id || "");
+            const researcherRole = await getResearcherRole(res.locals.session?.researcherId || "");
             if (researcherRole === "Administrador") return next();
 
             if (researcherRole !== roleRequired) {

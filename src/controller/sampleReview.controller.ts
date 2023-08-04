@@ -8,15 +8,15 @@ export async function createSampleReviewHandler(
     res: Response
 ) {
     try {
-        const researcherId = res.locals.session?.researcher_id;
+        const researcherId = res.locals.session?.researcherId;
 
         if (!researcherId) {
             throw new Error("Invalid session!");
         }
 
-        const reviewData: ISampleReview = { ...req.body, reviewer_id: researcherId };
+        const reviewData: ISampleReview = { ...req.body, reviewerId: researcherId };
 
-        const sampleId = req.body.sample_id;
+        const sampleId = req.body.sampleId;
 
         const reviewCreated = await SampleReviewService.createReview(sampleId, reviewData);
 

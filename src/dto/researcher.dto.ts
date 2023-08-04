@@ -4,15 +4,15 @@ import validator from "validator";
 import { object, string, z, optional, number } from "zod";
 
 export const researcherBodyDTO = object({
-    personal_data: object({
-        full_name: string({
+    personalData: object({
+        fullName: string({
             required_error: "Full name is required",
         }).trim(),
         phone: string({
             required_error: "Phone number is required",
         }).trim(),
-        profile_photo: optional(string()),
-        birth_date: string({
+        profilePhoto: optional(string()),
+        birthDate: string({
             required_error: "Birth date is required",
         }).transform((val, ctx) => {
             if (!validator.isISO8601(val)) {
@@ -24,7 +24,7 @@ export const researcherBodyDTO = object({
 
             return DateTime.fromISO(val).toJSDate();
         }),
-        country_state: string({
+        countryState: string({
             required_error: "Country state is required",
         }).trim(),
     }),
@@ -37,7 +37,7 @@ export const researcherBodyDTO = object({
     password: string({
         required_error: "Password is required",
     }).min(8, "Password too short - should be 8 chars minimium"),
-    password_confirmation: string({
+    confirmPassword: string({
         required_error: "Password confirmation is required",
     }),
     instituition: string({
@@ -61,9 +61,9 @@ export const paginateResearcherDTO = object({
 });
 
 export const researcherDTO = object({
-    body: researcherBodyDTO.refine((data) => data.password === data.password_confirmation, {
+    body: researcherBodyDTO.refine((data) => data.password === data.confirmPassword, {
         message: "Passwords do not match",
-        path: ["password_confirmation"],
+        path: ["confirmPassword"],
     }),
 });
 
@@ -71,18 +71,18 @@ export const updateResearcherDTO = object({
     body: researcherBodyDTO
         .extend({
             password: optional(string().min(8, "Password too short - should be 8 chars minimium")),
-            password_confirmation: optional(string()),
+            confirmPassword: optional(string()),
         })
         .refine(
             (data) => {
                 if (data.password) {
-                    return data.password === data.password_confirmation;
+                    return data.password === data.confirmPassword;
                 }
                 return true;
             },
             {
                 message: "Passwords do not match",
-                path: ["password_confirmation"],
+                path: ["confirmPassword"],
             }
         ),
 });

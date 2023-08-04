@@ -3,17 +3,16 @@ import * as ResearcherService from "../service/researcher.service";
 import { hashContent } from "../util/hash";
 import IResearcher from "../interface/researcher.interface";
 import { PaginateResearcherDTO, UpdateResearcherDTO, paginateResearcherParams } from "../dto/researcher.dto";
-import { FilterQuery } from "mongoose";
 
 export async function updateResearcherHandler(req: Request<{}, {}, UpdateResearcherDTO["body"], {}>, res: Response) {
     try {
         const newResearcherData: IResearcher = req.body;
 
         if (req.body.password) {
-            newResearcherData.password_hash = hashContent(req.body.password);
+            newResearcherData.passwordHash = hashContent(req.body.password);
         }
 
-        const researcherId = res.locals.session?.researcher_id;
+        const researcherId = res.locals.session?.researcherId;
 
         if (!researcherId) {
             throw new Error("Invalid session!");
@@ -37,9 +36,9 @@ export async function paginateResearchers(
     res: Response
 ) {
     try {
-        const researcher_id = res.locals.session?.researcher_id;
+        const researcherId = res.locals.session?.researcherId;
 
-        if (!researcher_id) {
+        if (!researcherId) {
             throw new Error("Invalid session!");
         }
 
@@ -48,7 +47,7 @@ export async function paginateResearchers(
         const currentPage = Number(req.params.currentPage);
         const itemsPerPage = Number(req.params.itemsPerPage || 10);
 
-        const page = await ResearcherService.paginateResearchers(currentPage, itemsPerPage, req.query, researcher_id);
+        const page = await ResearcherService.paginateResearchers(currentPage, itemsPerPage, req.query, researcherId);
 
         res.status(200).json(page);
     } catch (e) {

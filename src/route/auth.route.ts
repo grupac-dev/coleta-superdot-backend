@@ -10,7 +10,7 @@ const authRouter = express.Router();
 
 authRouter.post(
     "/register",
-    [uploaderConfig.single("personal_data[profile_photo]"), validateDTO(researcherDTO)],
+    [uploaderConfig.single("personalData[profilePhoto]"), validateDTO(researcherDTO)],
     AuthController.registerHandler
 );
 

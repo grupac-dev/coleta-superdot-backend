@@ -7,7 +7,7 @@ import { compareHashes } from "../util/hash";
 export async function createResearcher(researcherData: IResearcher): Promise<IResearcher> {
     try {
         const researcher = await ResearcherModel.create(researcherData);
-        return omit(researcher.toJSON(), "password_hash");
+        return omit(researcher.toJSON(), "passwordHash");
     } catch (e: any) {
         console.error(e);
         throw new Error("Is not possible create Researcher Data");
@@ -26,7 +26,7 @@ export async function updateResearcher(
             throw new Error("Researcher is not found");
         }
 
-        return omit(researcherUpdated.toJSON(), "password_hash");
+        return omit(researcherUpdated.toJSON(), "passwordHash");
     } catch {
         throw new Error("Is not possible updated Researcher");
     }
@@ -38,7 +38,7 @@ export async function deleteResearcher(researcherId: Types.ObjectId): Promise<IR
         if (!researcherDeleted) {
             throw new Error("Researcher is not found");
         }
-        return omit(researcherDeleted.toJSON(), "password_hash");
+        return omit(researcherDeleted.toJSON(), "passwordHash");
     } catch {
         throw new Error("Is not possible delete Researcher");
     }
@@ -83,15 +83,11 @@ export async function paginateResearchers(
 }
 
 export async function findResearcher(query: FilterQuery<IResearcher>): Promise<IResearcher> {
-    try {
-        const researcher = await ResearcherModel.findOne(query).lean().exec();
-        if (!researcher) {
-            throw new Error("Researcher is not found");
-        }
-        return omit(researcher, "password_hash");
-    } catch {
-        throw new Error("Is not possible found Researcher");
+    const researcher = await ResearcherModel.findOne(query).lean().exec();
+    if (!researcher) {
+        throw new Error("Researcher is not found");
     }
+    return omit(researcher, "passwordHash");
 }
 
 export async function validatePassword({
@@ -107,13 +103,13 @@ export async function validatePassword({
         return false;
     }
 
-    const isValid = await compareHashes(password, researcher.password_hash || "");
+    const isValid = await compareHashes(password, researcher.passwordHash || "");
 
     if (!isValid) {
         return false;
     }
 
-    return omit(researcher.toJSON(), "password_hash");
+    return omit(researcher.toJSON(), "passwordHash");
 }
 
 export async function getResearcherRole(id: string): Promise<string | undefined> {
@@ -132,9 +128,9 @@ export async function getResearcherRole(id: string): Promise<string | undefined>
 export async function isAttachmentOwner(fileName: string, researcherId: string) {
     const researcher = await ResearcherModel.findOne({
         $or: [
-            { "research_samples.research_cep.research_document": fileName },
-            { "research_samples.research_cep.tcle_document": fileName },
-            { "research_samples.research_cep.tale_document": fileName },
+            { "researchSamples.researchCep.researchDocument": fileName },
+            { "researchSamples.researchCep.tcleDocument": fileName },
+            { "researchSamples.researchCep.taleDocument": fileName },
         ],
     });
 

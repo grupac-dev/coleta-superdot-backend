@@ -2,14 +2,14 @@ import { number, object, string, z } from "zod";
 import { SAMPLE_STATUS_ARRAY } from "../util/consts";
 
 const createSampleReviewBody = object({
-    sample_id: string({
+    sampleId: string({
         required_error: "Sample id to review is required.",
     }),
-    next_status: z.enum(SAMPLE_STATUS_ARRAY, {
+    nextStatus: z.enum(SAMPLE_STATUS_ARRAY, {
         required_error: "Next status is required",
     }),
-    qtt_participants_authorized: number().optional(),
-    review_message: string({
+    qttParticipantsAuthorized: number().optional(),
+    reviewMessage: string({
         required_error: "The review message is required!",
     }),
 }).strict("A unknown key was found.");
