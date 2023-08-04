@@ -1,31 +1,32 @@
 import { object, string, z } from "zod";
 import { INSTITUITION_TYPE_ARRAY, SAMPLE_STATUS_ARRAY } from "../util/consts";
 
+/* CREATE SAMPLE */
 const createSampleBody = object({
-    research_title: string({
+    researchTitle: string({
         required_error: "Research title is required!",
     }).trim(),
-    sample_title: string({
+    sampleTitle: string({
         required_error: "Sample title is required!",
     }),
-    sample_group: string({
+    sampleGroup: string({
         required_error: "Sample group is required!",
     }),
-    qtt_participants_requested: string({
+    qttParticipantsRequested: string({
         required_error: "Is necessary to inform the sample partcipants quantity requested.",
     }).transform((val) => Number(val)),
-    research_cep: object({
-        cep_code: string({
+    researchCep: object({
+        cepCode: string({
             required_error: "CEP code is required.",
         }),
     }),
-    country_region: string({
+    countryRegion: string({
         required_error: "Sample country region is required.",
     }),
-    country_state: string({
+    countryState: string({
         required_error: "Sample country state is required.",
     }),
-    country_city: string({
+    countryCity: string({
         required_error: "Sample country city is required.",
     }),
     instituition: object({
@@ -38,23 +39,94 @@ const createSampleBody = object({
     }),
 }).strict("A unknown key was found.");
 
+export const createSampleDTO = object({
+    body: createSampleBody,
+});
+
+export type CreateSampleDTO = z.infer<typeof createSampleDTO>;
+
+/* PAGINATE ALL SAMPLES */
 export const paginateSampleParams = object({
     currentPage: string(),
     itemsPerPage: string().optional(),
 }).strict("A unknown param was found.");
 
-export const createSampleDTO = object({
-    body: createSampleBody,
+export const paginateAllSampleQuery = object({
+    status: z.enum(["", ...SAMPLE_STATUS_ARRAY]),
 });
 
+export const paginateAllSampleDTO = object({
+    params: paginateSampleParams,
+    query: paginateAllSampleQuery,
+});
+
+export type PaginateAllSampleDTO = z.infer<typeof paginateAllSampleDTO>;
+
+/* PAGINA RESEARCHER SAMPLES */
 export const paginateSampleQuery = object({
-    status: z.enum(["", ...SAMPLE_STATUS_ARRAY]),
+    researchTitle: string(),
+    sampleTitle: string(),
 });
 
 export const paginateSampleDTO = object({
     params: paginateSampleParams,
     query: paginateSampleQuery,
 });
-
-export type CreateSampleDTO = z.infer<typeof createSampleDTO>;
 export type PaginateSampleDTO = z.infer<typeof paginateSampleDTO>;
+
+/* DELETE SAMPLE */
+const deleteSampleParams = object({
+    sampleId: string(),
+});
+
+export const deleteSampleDTO = object({
+    params: deleteSampleParams,
+});
+
+export type DeleteSampleDTO = z.infer<typeof deleteSampleDTO>;
+
+/* EDIT SAMPLE */
+const editSampleBody = object({
+    researchTitle: string({
+        required_error: "Research title is required!",
+    }).trim(),
+    sampleTitle: string({
+        required_error: "Sample title is required!",
+    }),
+    qttParticipantsRequested: string({
+        required_error: "Is necessary to inform the sample partcipants quantity requested.",
+    }).transform((val) => Number(val)),
+    researchCep: object({
+        cepCode: string({
+            required_error: "CEP code is required.",
+        }),
+    }),
+    countryRegion: string({
+        required_error: "Sample country region is required.",
+    }),
+    countryState: string({
+        required_error: "Sample country state is required.",
+    }),
+    countryCity: string({
+        required_error: "Sample country city is required.",
+    }),
+    instituition: object({
+        name: string({
+            required_error: "Sample instituition name is required.",
+        }),
+        instType: z.enum(INSTITUITION_TYPE_ARRAY, {
+            required_error: "Sample instituition type is required.",
+        }),
+    }),
+}).strip();
+
+export const editSampleParams = object({
+    sampleId: string(),
+});
+
+export const editSampleDTO = object({
+    body: editSampleBody,
+    params: editSampleParams,
+});
+
+export type EditSampleDTO = z.infer<typeof editSampleDTO>;
