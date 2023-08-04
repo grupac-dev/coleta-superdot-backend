@@ -13,6 +13,10 @@ const sampleGroupSchema = new Schema<ISampleGroup>(
             type: [String],
             required: [true, "The group sample forms is required."],
         },
+        available: {
+            type: Boolean,
+            required: [true, "The available flag is required."],
+        },
     },
     {
         timestamps: true,
