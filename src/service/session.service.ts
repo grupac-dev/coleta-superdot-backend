@@ -8,7 +8,7 @@ import env from "../util/validateEnv";
 
 export async function createSession(researcherId: Types.ObjectId, userAgent: string): Promise<ISession> {
     const session = await SessionModel.create({
-        researcher_id: researcherId,
+        researcherId: researcherId,
         userAgent,
     });
 
@@ -26,10 +26,11 @@ export async function updateSession(query: FilterQuery<ISession>, update: Update
     return SessionModel.updateOne(query, update).exec();
 }
 
-export function issueAccessToken(session: ISession) {
+export function issueAccessToken(session: ISession, role?: string) {
     const accessToken = signJwt(
         {
             session: session._id,
+            userRole: role,
         },
         "ACCESS_TOKEN_PRIVATE_KEY",
         {
@@ -63,19 +64,11 @@ export async function reIssueAccessToken(refreshToken: string) {
 
     if (!session || !session.valid) return false;
 
-    const researcher = await findResearcher({ _id: session.researcher_id });
+    const researcher = await findResearcher({ _id: session.researcherId });
 
     if (!researcher) return false;
 
-    const accessToken = signJwt(
-        {
-            session: session._id,
-        },
-        "ACCESS_TOKEN_PRIVATE_KEY",
-        {
-            expiresIn: env.ACCESS_TOKEN_TTL,
-        }
-    );
+    const accessToken = issueAccessToken(session);
 
     return accessToken;
 }
