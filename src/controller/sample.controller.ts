@@ -1,11 +1,17 @@
 import { Request, Response } from "express";
 import * as SampleService from "../service/sample.service";
 import ISample from "../interface/sample.interface";
-import { CreateSampleDTO, PaginateSampleDTO, paginateSampleParams } from "../dto/sample.dto";
+import {
+    CreateSampleDTO,
+    DeleteSampleDTO,
+    EditSampleDTO,
+    PaginateAllSampleDTO,
+    PaginateSampleDTO,
+} from "../dto/sample.dto";
 
 export async function createSampleHandler(req: Request<{}, {}, CreateSampleDTO["body"], {}>, res: Response) {
     try {
-        const researcherId = res.locals.session?.researcher_id;
+        const researcherId = res.locals.session?.researcherId;
 
         if (!researcherId) {
             throw new Error("Invalid session!");
@@ -17,20 +23,19 @@ export async function createSampleHandler(req: Request<{}, {}, CreateSampleDTO["
 
         if (files) {
             Object.keys(files).forEach((key) => {
-                console.log(key);
-                if (key === "research_cep[research_document]") {
-                    sampleData.research_cep.research_document = files[key][0].filename;
-                } else if (key === "research_cep[tcle_document]") {
-                    sampleData.research_cep.tcle_document = files[key][0].filename;
-                } else if (key === "research_cep[tale_document]") {
-                    sampleData.research_cep.tale_document = files[key][0].filename;
+                if (key === "researchCep[researchDocument]") {
+                    sampleData.researchCep.researchDocument = files[key][0].filename;
+                } else if (key === "researchCep[tcleDocument]") {
+                    sampleData.researchCep.tcleDocument = files[key][0].filename;
+                } else if (key === "researchCep[taleDocument]") {
+                    sampleData.researchCep.taleDocument = files[key][0].filename;
                 }
             });
         }
 
         const sampleCreated = await SampleService.createSample(researcherId, sampleData);
 
-        res.status(200).json(sampleCreated);
+        res.status(201).json(sampleCreated);
     } catch (e: any) {
         console.log(e);
 
@@ -39,18 +44,61 @@ export async function createSampleHandler(req: Request<{}, {}, CreateSampleDTO["
     }
 }
 
-export async function paginateResearcherSamples(req: Request<PaginateSampleDTO["params"], {}, {}, {}>, res: Response) {
+export async function editSampleHandler(
+    req: Request<EditSampleDTO["params"], {}, EditSampleDTO["body"], {}>,
+    res: Response
+) {
     try {
-        const researcher_id = res.locals.session?.researcher_id;
+        console.log(req.body);
+        console.log(req.files);
+        const researcherId = res.locals.session?.researcherId;
 
-        if (!researcher_id) {
+        if (!researcherId) {
+            throw new Error("Invalid session!");
+        }
+
+        const sampleData: ISample = req.body;
+
+        const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+
+        if (files) {
+            Object.keys(files).forEach((key) => {
+                if (key === "researchCep[researchDocument]") {
+                    sampleData.researchCep.researchDocument = files[key][0].filename;
+                } else if (key === "researchCep[tcleDocument]") {
+                    sampleData.researchCep.tcleDocument = files[key][0].filename;
+                } else if (key === "researchCep[taleDocument]") {
+                    sampleData.researchCep.taleDocument = files[key][0].filename;
+                }
+            });
+        }
+
+        const sampleUpdated = await SampleService.editSample(researcherId, req.params.sampleId, sampleData);
+
+        res.status(200).json(sampleUpdated);
+    } catch (e: any) {
+        console.log(e);
+
+        // TO DO errors handlers
+        res.status(409).json(e.message);
+    }
+}
+
+export async function paginateResearcherSamples(
+    req: Request<PaginateSampleDTO["params"], {}, {}, PaginateSampleDTO["query"]>,
+    res: Response
+) {
+    try {
+        const researcherId = res.locals.session?.researcherId;
+
+        if (!researcherId) {
             throw new Error("Invalid session!");
         }
 
         const currentPage = Number(req.params.currentPage);
         const itemsPerPage = Number(req.params.itemsPerPage || 10);
 
-        const page = await SampleService.paginateResearcherSamples(researcher_id, currentPage, itemsPerPage);
+        const page = await SampleService.paginateResearcherSamples(researcherId, currentPage, itemsPerPage, req.query);
 
         res.status(200).json(page);
     } catch (e) {
@@ -62,22 +110,43 @@ export async function paginateResearcherSamples(req: Request<PaginateSampleDTO["
 }
 
 export async function paginateAllSamples(
-    req: Request<PaginateSampleDTO["params"], {}, {}, PaginateSampleDTO["query"]>,
+    req: Request<PaginateAllSampleDTO["params"], {}, {}, PaginateAllSampleDTO["query"]>,
     res: Response
 ) {
     try {
-        const researcher_id = res.locals.session?.researcher_id;
+        const researcherId = res.locals.session?.researcherId;
 
-        if (!researcher_id) {
+        if (!researcherId) {
             throw new Error("Invalid session!");
         }
 
         const currentPage = Number(req.params.currentPage);
         const itemsPerPage = Number(req.params.itemsPerPage || 10);
 
-        const page = await SampleService.paginateAllSamples(researcher_id, currentPage, itemsPerPage, req.query.status);
+        const page = await SampleService.paginateAllSamples(researcherId, currentPage, itemsPerPage, req.query.status);
 
         res.status(200).json(page);
+    } catch (e) {
+        console.log(e);
+
+        // TO DO errors handlers
+        res.status(409).json(e);
+    }
+}
+
+export async function deleteSample(req: Request<DeleteSampleDTO["params"], {}, {}, {}>, res: Response) {
+    try {
+        const researcherId = res.locals.session?.researcherId;
+
+        if (!researcherId) {
+            throw new Error("Invalid session!");
+        }
+
+        const sampleToDelete = req.params.sampleId;
+
+        await SampleService.deleteSample(researcherId, sampleToDelete);
+
+        res.status(200).send();
     } catch (e) {
         console.log(e);
 
