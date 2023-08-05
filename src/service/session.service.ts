@@ -8,7 +8,7 @@ import env from "../util/validateEnv";
 
 export async function createSession(researcherId: Types.ObjectId, userAgent: string): Promise<ISession> {
     const session = await SessionModel.create({
-        researcherId: researcherId,
+        researcherId,
         userAgent,
     });
 

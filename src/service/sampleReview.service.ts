@@ -58,8 +58,8 @@ export async function findReviewsBySampleId(sampleId: string) {
         })
         .unwind("$reviewer")
         .project({
-            review_details: "$researchSamples.reviews",
-            reviewer_full_name: "$reviewer.personal_data.fullName",
+            reviewDetails: "$researchSamples.reviews",
+            reviewerFullName: "$reviewer.personalData.fullName",
             _id: 0,
         })
         .exec();
