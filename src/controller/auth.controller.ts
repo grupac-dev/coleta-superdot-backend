@@ -15,12 +15,12 @@ export async function registerHandler(req: Request<{}, {}, ResearcherDTO["body"]
         let researcherData: IResearcher = req.body;
 
         if (req.file) {
-            researcherData.personal_data.profile_photo = req.file.filename;
+            researcherData.personalData.profilePhoto = req.file.filename;
         }
 
         researcherData.role = env.DEFAULT_APP_ROLE;
 
-        researcherData.password_hash = hashContent(req.body.password);
+        researcherData.passwordHash = hashContent(req.body.password);
 
         const researcherCreated = await ResearcherService.createResearcher(researcherData);
 
@@ -54,7 +54,7 @@ export async function loginHandler(req: Request<{}, {}, LoginDTO["body"], {}>, r
             req.get("user-agent") || ""
         );
 
-        const accessToken = SessionService.issueAccessToken(session);
+        const accessToken = SessionService.issueAccessToken(session, (researcher as IResearcher).role);
         const refreshToken = SessionService.issueRefreshToken(session);
 
         res.status(200).json({ accessToken, refreshToken });

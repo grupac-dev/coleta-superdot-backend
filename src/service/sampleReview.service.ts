@@ -4,33 +4,33 @@ import ResearcherModel from "../model/researcher.model";
 
 export async function createReview(sampleId: string, reviewData: ISampleReview) {
     const researcher = await ResearcherModel.findOne(
-        { "research_samples._id": sampleId },
-        { "research_samples._id": 1, "research_samples.status": 1, "research_samples.reviews": 1 }
+        { "researchSamples._id": sampleId },
+        { "researchSamples._id": 1, "researchSamples.status": 1, "researchSamples.reviews": 1 }
     );
 
     if (!researcher) {
         throw new Error("Researcher has no samples.");
     }
 
-    if (!researcher.research_samples) {
+    if (!researcher.researchSamples) {
         throw new Error("This researcher hasn't samples.");
     }
 
-    const sample = researcher.research_samples.find((sample) => sample._id?.toString() === sampleId);
+    const sample = researcher.researchSamples.find((sample) => sample._id?.toString() === sampleId);
 
     if (!sample) {
         throw new Error("Sample not found.");
     }
 
-    reviewData.previous_status = sample.status;
+    reviewData.previousStatus = sample.status;
 
-    sample.status = reviewData.next_status;
+    sample.status = reviewData.nextStatus;
 
-    if (sample.status === "Autorizado" && !reviewData.qtt_participants_authorized) {
+    if (sample.status === "Autorizado" && !reviewData.qttParticipantsAuthorized) {
         throw new Error("Review with 'Autorizado' status require the quantity of participantes authorized.");
     }
 
-    sample.qtt_participants_authorized = reviewData.qtt_participants_authorized;
+    sample.qttParticipantsAuthorized = reviewData.qttParticipantsAuthorized;
 
     sample.reviews?.push(reviewData);
 
@@ -46,20 +46,20 @@ interface SampleReviewWithReviewerName {
 
 export async function findReviewsBySampleId(sampleId: string) {
     const researcher = await ResearcherModel.aggregate<SampleReviewWithReviewerName>()
-        .unwind("$research_samples")
-        .match({ "research_samples._id": new mongoose.Types.ObjectId(sampleId) })
-        .unwind("$research_samples.reviews")
-        .sort({ "research_samples.reviews.createdAt": -1 })
+        .unwind("$researchSamples")
+        .match({ "researchSamples._id": new mongoose.Types.ObjectId(sampleId) })
+        .unwind("$researchSamples.reviews")
+        .sort({ "researchSamples.reviews.createdAt": -1 })
         .lookup({
             from: "researchers",
-            localField: "research_samples.reviews.reviewer_id",
+            localField: "researchSamples.reviews.reviewerId",
             foreignField: "_id",
             as: "reviewer",
         })
         .unwind("$reviewer")
         .project({
-            review_details: "$research_samples.reviews",
-            reviewer_full_name: "$reviewer.personal_data.full_name",
+            review_details: "$researchSamples.reviews",
+            reviewer_full_name: "$reviewer.personal_data.fullName",
             _id: 0,
         })
         .exec();

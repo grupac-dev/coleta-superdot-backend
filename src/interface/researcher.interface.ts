@@ -2,18 +2,18 @@ import ISample from "./sample.interface";
 
 export default interface IResearcher {
     _id?: string;
-    personal_data: {
-        full_name: string;
+    personalData: {
+        fullName: string;
         phone: string;
-        profile_photo?: string;
-        birth_date: Date;
-        country_state: string;
+        profilePhoto?: string;
+        birthDate: Date;
+        countryState: string;
     };
     email: string;
-    password_hash?: string;
+    passwordHash?: string;
     role?: string;
     instituition: string;
-    research_samples?: [ISample];
+    researchSamples?: ISample[];
     createdAt?: Date;
     updatedAt?: Date;
 }

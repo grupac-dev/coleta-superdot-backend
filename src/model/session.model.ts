@@ -3,7 +3,7 @@ import ISession from "../interface/session.interface";
 
 const sessionSchema = new Schema<ISession>(
     {
-        researcher_id: {
+        researcherId: {
             type: Types.ObjectId,
             ref: "Researcher",
         },

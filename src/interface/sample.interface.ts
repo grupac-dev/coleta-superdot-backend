@@ -3,27 +3,29 @@ import ISampleReview from "./sampleReview.interface";
 
 export default interface ISample {
     _id?: string;
-    research_title: string;
-    sample_title: string;
-    sample_group: string;
-    qtt_participants_requested: number;
-    qtt_participants_authorized?: number;
-    research_cep: {
-        cep_code: string;
-        research_document?: string;
-        tcle_document?: string;
-        tale_document?: string;
+    researchTitle: string;
+    sampleTitle: string;
+    sampleGroup?: string; // Required only in POST actions, unnecessary in PUT actions
+    qttParticipantsRequested: number;
+    qttParticipantsAuthorized?: number; // Updated only by backend
+    qttParticipantsRegistered?: number; // Updated only by backend
+    researchCep: {
+        cepCode: string;
+        researchDocument?: string;
+        tcleDocument?: string;
+        taleDocument?: string;
     };
-    status?: SampleStatus;
-    country_region: string;
-    country_state: string;
-    country_city: string;
+    status?: SampleStatus; // Updated only by backend
+    countryRegion: string;
+    countryState: string;
+    countryCity: string;
     instituition: {
         name: string;
         instType: InstituitionType;
     };
     reviews?: [ISampleReview];
     participants?: [];
+    approvedAt?: Date;
     createdAt?: Date;
     updatedAt?: Date;
 }

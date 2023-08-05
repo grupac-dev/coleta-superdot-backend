@@ -4,8 +4,8 @@ import { sampleSchema } from "./schemas/sample.schema";
 
 const researcherSchema = new Schema<IResearcher>(
     {
-        personal_data: {
-            full_name: {
+        personalData: {
+            fullName: {
                 type: String,
                 uppercase: true,
                 trim: true,
@@ -15,12 +15,12 @@ const researcherSchema = new Schema<IResearcher>(
                 type: String,
                 required: [true, "Phone number is required"],
             },
-            profile_photo: String,
-            birth_date: {
+            profilePhoto: String,
+            birthDate: {
                 type: Date,
                 required: [true, "Birth date is required"],
             },
-            country_state: {
+            countryState: {
                 type: String,
                 trim: true,
                 required: [true, "Country state is required"],
@@ -37,7 +37,7 @@ const researcherSchema = new Schema<IResearcher>(
             lowercase: true,
             required: [true, "Email is required"],
         },
-        password_hash: {
+        passwordHash: {
             type: String,
             required: [true, "Password hash is required"],
         },
@@ -50,7 +50,7 @@ const researcherSchema = new Schema<IResearcher>(
             type: String,
             required: [true, "Instituition is required"],
         },
-        research_samples: [sampleSchema],
+        researchSamples: [sampleSchema],
     },
     {
         timestamps: true,

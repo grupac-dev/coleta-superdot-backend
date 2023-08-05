@@ -5,52 +5,56 @@ import { INSTITUITION_TYPE_ARRAY, SAMPLE_STATUS_ARRAY } from "../../util/consts"
 
 export const sampleSchema = new Schema<ISample>(
     {
-        research_title: {
+        researchTitle: {
             type: String,
             required: [true, "Research title is required!"],
         },
-        sample_title: {
+        sampleTitle: {
             type: String,
             required: [true, "Sample title is required!"],
         },
-        sample_group: {
+        sampleGroup: {
             type: String,
             required: [true, "Sample group is required!"],
         },
-        qtt_participants_requested: {
+        qttParticipantsRequested: {
             type: Number,
             required: [true, "Is necessary to inform the sample partcipants quantity requested."],
         },
-        qtt_participants_authorized: Number,
-        research_cep: {
-            cep_code: {
+        qttParticipantsAuthorized: Number,
+        qttParticipantsRegistered: {
+            type: Number,
+            default: 0,
+        },
+        researchCep: {
+            cepCode: {
                 type: String,
                 required: [true, "CEP code is required."],
             },
-            research_document: {
+            researchDocument: {
                 type: String,
                 required: [true, "Research document is required."],
             },
-            tcle_document: {
+            tcleDocument: {
                 type: String,
                 required: [true, "TCLE document is required."],
             },
-            tale_document: String,
+            taleDocument: String,
         },
         status: {
             type: String,
             enum: SAMPLE_STATUS_ARRAY,
             required: [true, "A status is required."],
         },
-        country_region: {
+        countryRegion: {
             type: String,
             required: [true, "Sample country region is required."],
         },
-        country_state: {
+        countryState: {
             type: String,
             required: [true, "Sample country state is required."],
         },
-        country_city: {
+        countryCity: {
             type: String,
             required: [true, "Sample country city is required."],
         },
