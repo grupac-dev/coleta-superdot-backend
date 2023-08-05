@@ -100,10 +100,6 @@ export async function paginateResearcherSamples(
         });
     }
 
-    console.log(samples);
-
-    console.log(filters);
-
     return {
         data: samples,
         pagination: {

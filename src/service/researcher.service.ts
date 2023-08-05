@@ -47,19 +47,19 @@ export async function deleteResearcher(researcherId: Types.ObjectId): Promise<IR
 export async function paginateResearchers(
     currentPage: number,
     itemsPerPage: number,
-    filter: { user_name?: string; user_email?: string },
+    filter: { userName?: string; userEmail?: string },
     currentResearcherId: string
 ) {
     try {
         const query = ResearcherModel.find(
             {
                 $and: [
-                    filter.user_name ? { "personal_data.full_name": RegExp(filter.user_name, "i") } : {},
-                    filter.user_email ? { email: RegExp(filter.user_email, "i") } : {},
+                    filter.userName ? { "personalData.fullName": RegExp(filter.userName, "i") } : {},
+                    filter.userEmail ? { email: RegExp(filter.userEmail, "i") } : {},
                 ],
             },
             {
-                "personal_data.full_name": true,
+                "personalData.fullName": true,
                 email: true,
             }
         )

@@ -1,7 +1,7 @@
 import { DateTime } from "luxon";
 import validator from "validator";
 
-import { object, string, z, optional, number } from "zod";
+import { object, string, z, optional } from "zod";
 
 export const researcherBodyDTO = object({
     personalData: object({
@@ -37,7 +37,7 @@ export const researcherBodyDTO = object({
     password: string({
         required_error: "Password is required",
     }).min(8, "Password too short - should be 8 chars minimium"),
-    confirmPassword: string({
+    passwordConfirmation: string({
         required_error: "Password confirmation is required",
     }),
     instituition: string({
@@ -51,8 +51,8 @@ export const paginateResearcherParams = object({
 });
 
 export const paginateResearcherQuery = object({
-    user_name: string().optional(),
-    user_email: string().optional(),
+    userName: string().optional(),
+    userEmail: string().optional(),
 });
 
 export const paginateResearcherDTO = object({
@@ -61,9 +61,9 @@ export const paginateResearcherDTO = object({
 });
 
 export const researcherDTO = object({
-    body: researcherBodyDTO.refine((data) => data.password === data.confirmPassword, {
+    body: researcherBodyDTO.refine((data) => data.password === data.passwordConfirmation, {
         message: "Passwords do not match",
-        path: ["confirmPassword"],
+        path: ["passwordConfirmation"],
     }),
 });
 
@@ -71,18 +71,18 @@ export const updateResearcherDTO = object({
     body: researcherBodyDTO
         .extend({
             password: optional(string().min(8, "Password too short - should be 8 chars minimium")),
-            confirmPassword: optional(string()),
+            passwordConfirmation: optional(string()),
         })
         .refine(
             (data) => {
                 if (data.password) {
-                    return data.password === data.confirmPassword;
+                    return data.password === data.passwordConfirmation;
                 }
                 return true;
             },
             {
                 message: "Passwords do not match",
-                path: ["confirmPassword"],
+                path: ["passwordConfirmation"],
             }
         ),
 });
