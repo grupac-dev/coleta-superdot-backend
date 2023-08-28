@@ -8,6 +8,7 @@ import { authRouter } from "./route/auth.route";
 import { sampleGroupRouter } from "./route/sampleGroup.route";
 import { sampleRouter } from "./route/sample.route";
 import { sampleReviewRouter } from "./route/sampleReview.route";
+import { adultFormRoute } from "./route/adultForm.route";
 
 const app = express();
 
@@ -28,6 +29,8 @@ app.use("/api/sampleGroup", sampleGroupRouter);
 app.use("/api/sample", sampleRouter);
 
 app.use("/api/sampleReview", sampleReviewRouter);
+
+app.use("/api/adultForm", adultFormRoute);
 
 app.use((req, res, next) => {
     next(createHttpError(404, "Endpoint not found"));
