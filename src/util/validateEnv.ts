@@ -12,4 +12,10 @@ export default cleanEnv(process.env, {
     MONGO_CONNECTION_STRING: str(),
     PORT: num(),
     DEFAULT_APP_ROLE: str(),
+    NODE_ENV: str(),
+    EMAIL_HOST: str(),
+    EMAIL_PORT: num(),
+    EMAIL_USER: str(),
+    EMAIL_PASS: str(),
+    FRONT_END_URL: str(),
 });
