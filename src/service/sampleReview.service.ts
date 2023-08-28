@@ -1,15 +1,26 @@
 import mongoose from "mongoose";
 import ISampleReview from "../interface/sampleReview.interface";
 import ResearcherModel from "../model/researcher.model";
+import * as EmailUtils from "../util/emailSender.util";
+import { findResearcher } from "./researcher.service";
+import IResearcher from "../interface/researcher.interface";
+import { DateTime } from "luxon";
 
 export async function createReview(sampleId: string, reviewData: ISampleReview) {
     const researcher = await ResearcherModel.findOne(
         { "researchSamples._id": sampleId },
-        { "researchSamples._id": 1, "researchSamples.status": 1, "researchSamples.reviews": 1 }
+        {
+            "researchSamples._id": 1,
+            email: 1,
+            "personalData.fullName": 1,
+            "researchSamples.sampleTitle": 1,
+            "researchSamples.status": 1,
+            "researchSamples.reviews": 1,
+        }
     );
 
     if (!researcher) {
-        throw new Error("Researcher has no samples.");
+        throw new Error("Researcher not found.");
     }
 
     if (!researcher.researchSamples) {
@@ -35,6 +46,20 @@ export async function createReview(sampleId: string, reviewData: ISampleReview) 
     sample.reviews?.push(reviewData);
 
     await researcher.save();
+
+    /** SEDING EMAIL */
+    const reviewer = await findResearcher({ _id: reviewData.reviewerId });
+    EmailUtils.dispatchReviewRequestEmail({
+        qttParticipantsAuthorized: sample.qttParticipantsAuthorized,
+        researcherEmail: researcher.email,
+        researcherName: researcher.personalData.fullName,
+        reviewerEmail: reviewer.email,
+        reviewerFullName: reviewer.personalData.fullName,
+        reviewerMessage: reviewData.reviewMessage,
+        sampleName: sample.sampleTitle,
+        sampleStatus: sample.status,
+        reviewDate: DateTime.fromJSDate(new Date()).toFormat("dd/LL/yyyy - HH:mm"),
+    });
 
     return reviewData;
 }
