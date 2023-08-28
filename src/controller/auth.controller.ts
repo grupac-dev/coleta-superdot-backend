@@ -9,6 +9,8 @@ import env from "../util/validateEnv";
 import { Types } from "mongoose";
 import { LoginDTO, SetUserRoleDTO } from "../dto/auth.dto";
 import { UserRoleDTO } from "../dto/auth.dto";
+import { dispatchNewRoleEmail } from "../util/emailSender.util";
+import { RolesType } from "../util/consts";
 
 export async function registerHandler(req: Request<{}, {}, ResearcherDTO["body"], {}>, res: Response) {
     try {
@@ -91,12 +93,28 @@ export async function userRoleHandler(req: Request<UserRoleDTO["params"], {}, {}
 
 export async function setUserRoleHandler(req: Request<{}, {}, SetUserRoleDTO["body"], {}>, res: Response) {
     try {
-        const { userId, newRole, emailMessage } = req.body;
-        await ResearcherService.updateResearcher({ _id: userId }, { role: newRole });
+        const adm = await ResearcherService.findResearcher({ _id: res.locals.session?.researcherId });
 
-        if (emailMessage) {
-            console.log(emailMessage);
+        if (!adm) {
+            throw new Error("Invalid session!");
         }
+
+        const { userId, emailMessage } = req.body;
+        if (!req.body.newRole.match("Pesquisador|Administrador|Revisor")) {
+            throw new Error("Invalid role!");
+        }
+        const newRole = req.body.newRole as RolesType;
+
+        const researcherUpdated = await ResearcherService.updateResearcher({ _id: userId }, { role: newRole });
+
+        dispatchNewRoleEmail({
+            admEmail: adm.email,
+            admMessage: emailMessage,
+            admName: adm.personalData.fullName,
+            newRole,
+            researcherEmail: researcherUpdated.email,
+            researcherName: researcherUpdated.personalData.fullName,
+        });
 
         res.status(200).end();
     } catch (e) {
