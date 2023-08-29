@@ -2,6 +2,7 @@ import { Schema } from "mongoose";
 import ISample from "../../interface/sample.interface";
 import { sampleReviewSchema } from "./sampleReview.schema";
 import { INSTITUITION_TYPE_ARRAY, SAMPLE_STATUS_ARRAY } from "../../util/consts";
+import { participantSchema } from "./participant.schema";
 
 export const sampleSchema = new Schema<ISample>(
     {
@@ -70,6 +71,7 @@ export const sampleSchema = new Schema<ISample>(
             },
         },
         reviews: [sampleReviewSchema],
+        participants: [participantSchema],
     },
     {
         timestamps: true,

@@ -1,4 +1,5 @@
 import { InstituitionType, SampleStatus } from "../util/consts";
+import { IParticipant } from "./participant.interface";
 import ISampleReview from "./sampleReview.interface";
 
 export default interface ISample {
@@ -24,7 +25,7 @@ export default interface ISample {
         instType: InstituitionType;
     };
     reviews?: [ISampleReview];
-    participants?: [];
+    participants?: IParticipant[];
     approvedAt?: Date;
     createdAt?: Date;
     updatedAt?: Date;
