@@ -60,3 +60,15 @@ export const adultFormParticipantDataDTO = object({
 });
 
 export type AdultFormParticipantDataDTO = z.infer<typeof adultFormParticipantDataDTO>;
+
+/*** TO ACCEPT DOCS */
+
+const adultFormAcceptDocsParams = object({
+    sampleId: string({ required_error: "Sample id param is required!" }),
+});
+
+export const adultFormAcceptDocsDTO = object({
+    params: adultFormAcceptDocsParams,
+});
+
+export type AdultFormAcceptDocsDTO = z.infer<typeof adultFormAcceptDocsDTO>;
