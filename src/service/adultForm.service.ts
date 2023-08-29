@@ -57,3 +57,39 @@ export function issueParticipantToken(participantId: string) {
 
     return accessToken;
 }
+
+export async function acceptDocs(sampleId: string, participantId: string) {
+    if (!mongoose.Types.ObjectId.isValid(sampleId)) {
+        throw new Error("Sample id is invalid.");
+    }
+
+    const researcherDoc = await ResearcherModel.findOne({ "researchSamples._id": sampleId });
+
+    if (!researcherDoc || !researcherDoc.researchSamples) {
+        throw new Error("Sample not found.");
+    }
+
+    const sample = researcherDoc.researchSamples.find((sample) => sample._id?.toString() === sampleId);
+
+    if (!sample) {
+        throw new Error("Sample not found.");
+    }
+
+    const participant = sample.participants?.find((participant) => participant._id?.toString() === participantId);
+
+    if (!participant) {
+        throw new Error("Participant not found.");
+    }
+
+    if (sample.researchCep.taleDocument) {
+        participant.acceptTale = true;
+    }
+
+    if (sample.researchCep.tcleDocument) {
+        participant.acceptTcle = true;
+    }
+
+    await researcherDoc.save();
+
+    return true;
+}
