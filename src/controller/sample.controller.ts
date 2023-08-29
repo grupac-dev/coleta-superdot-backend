@@ -5,6 +5,7 @@ import {
     CreateSampleDTO,
     DeleteSampleDTO,
     EditSampleDTO,
+    GetRequiredDocsDTO,
     PaginateAllSampleDTO,
     PaginateSampleDTO,
 } from "../dto/sample.dto";
@@ -149,6 +150,21 @@ export async function deleteSample(req: Request<DeleteSampleDTO["params"], {}, {
         res.status(200).send();
     } catch (e) {
         console.log(e);
+
+        // TO DO errors handlers
+        res.status(409).json(e);
+    }
+}
+
+export async function handlerGetRequiredDocs(req: Request<GetRequiredDocsDTO["params"], {}, {}, {}>, res: Response) {
+    try {
+        const sampleId = req.params.sampleId;
+
+        const docs = await SampleService.getRequiredDocs(sampleId);
+
+        res.status(200).json(docs);
+    } catch (e) {
+        console.error(e);
 
         // TO DO errors handlers
         res.status(409).json(e);

@@ -5,6 +5,7 @@ import {
     createSampleDTO,
     deleteSampleDTO,
     editSampleDTO,
+    getRequiredDocsDTO,
     paginateAllSampleDTO,
     paginateSampleDTO,
 } from "../dto/sample.dto";
@@ -12,6 +13,7 @@ import { validateDTO } from "../middleware/validateDTO.middleware";
 import { uploaderConfig } from "../util/uploader";
 import { requireRole } from "../middleware/requireRole.middleware";
 import { protectResource } from "../middleware/protectResource.middleware";
+import { requireParticipantJWT } from "../middleware/requireParticipantJWT";
 
 const sampleRouter = express.Router();
 
@@ -44,7 +46,13 @@ sampleRouter.get(
     SampleController.paginateAllSamples
 );
 
-sampleRouter.use("/attachment", protectResource, express.static("src/storage/uploads"));
+sampleRouter.get(
+    "/listRequiredDocs/:sampleId",
+    [validateDTO(getRequiredDocsDTO), requireParticipantJWT],
+    SampleController.handlerGetRequiredDocs
+);
+
+sampleRouter.use("/attachment", express.static("src/storage/uploads"));
 
 sampleRouter.delete(
     "/deleteSample/:sampleId",
