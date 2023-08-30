@@ -1,6 +1,10 @@
 import express from "express";
 import { validateDTO } from "../middleware/validateDTO.middleware";
-import { adultFormAcceptDocsDTO, adultFormParticipantDataDTO } from "../dto/adultForm.dto";
+import {
+    adultFormAcceptDocsDTO,
+    adultFormIndicateSecondSourceDTO,
+    adultFormParticipantDataDTO,
+} from "../dto/adultForm.dto";
 import * as AdultFormController from "../controller/adultForm.controller";
 import { requireParticipantJWT } from "../middleware/requireParticipantJWT";
 
@@ -17,6 +21,13 @@ adultFormRoute.patch(
     validateDTO(adultFormAcceptDocsDTO),
     requireParticipantJWT,
     AdultFormController.handlerAcceptDocs
+);
+
+adultFormRoute.post(
+    "/indicateSecondSource/sample/:sampleId",
+    validateDTO(adultFormIndicateSecondSourceDTO),
+    requireParticipantJWT,
+    AdultFormController.handlerIndicateSecondSources
 );
 
 export { adultFormRoute };
