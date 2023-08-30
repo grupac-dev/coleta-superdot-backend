@@ -7,6 +7,7 @@ import {
     INCOME_LEVELS_ARRAY,
     MARITAL_STATUS_ARRAY,
 } from "../../util/consts";
+import { secondSourceSchema } from "./secondSource.schema";
 
 export const participantSchema = new Schema<IParticipant>(
     {
@@ -100,6 +101,7 @@ export const participantSchema = new Schema<IParticipant>(
         },
         acceptTale: Boolean,
         acceptTcle: Boolean,
+        secondSources: [secondSourceSchema],
     },
     {
         timestamps: true,
