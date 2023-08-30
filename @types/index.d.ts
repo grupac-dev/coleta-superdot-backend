@@ -5,6 +5,7 @@ declare global {
     namespace Express {
         interface Locals {
             session: ISession | null;
+            participantId: string;
         }
     }
 }

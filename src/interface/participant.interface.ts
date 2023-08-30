@@ -27,4 +27,6 @@ export interface IParticipant {
         street: string;
         houseNumber: string;
     };
+    acceptTcle?: boolean;
+    acceptTale?: boolean;
 }

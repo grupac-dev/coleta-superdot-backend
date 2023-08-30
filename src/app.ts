@@ -9,6 +9,7 @@ import { sampleGroupRouter } from "./route/sampleGroup.route";
 import { sampleRouter } from "./route/sample.route";
 import { sampleReviewRouter } from "./route/sampleReview.route";
 import { adultFormRoute } from "./route/adultForm.route";
+import { deserializeParticipantJWT } from "./middleware/deserializeParticipantJWT";
 
 const app = express();
 
@@ -19,6 +20,7 @@ app.use(cors());
 app.use(morgan("dev"));
 
 app.use(deserializeSession);
+app.use(deserializeParticipantJWT);
 
 app.use("/api/auth", authRouter);
 

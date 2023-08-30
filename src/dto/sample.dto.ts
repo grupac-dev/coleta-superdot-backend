@@ -130,3 +130,15 @@ export const editSampleDTO = object({
 });
 
 export type EditSampleDTO = z.infer<typeof editSampleDTO>;
+
+/** GET REQUIRED DOCS */
+
+const getRequiredDocsParams = object({
+    sampleId: string({ required_error: "Sample id param is required!" }),
+});
+
+export const getRequiredDocsDTO = object({
+    params: getRequiredDocsParams,
+});
+
+export type GetRequiredDocsDTO = z.infer<typeof getRequiredDocsDTO>;

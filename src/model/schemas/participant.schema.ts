@@ -98,6 +98,8 @@ export const participantSchema = new Schema<IParticipant>(
                 required: [true, "Participant houseNumber is required!"],
             },
         },
+        acceptTale: Boolean,
+        acceptTcle: Boolean,
     },
     {
         timestamps: true,

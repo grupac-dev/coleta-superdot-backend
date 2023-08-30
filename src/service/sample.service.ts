@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import { Page } from "../interface/page.interface";
 import IResearcher from "../interface/researcher.interface";
 import ISample from "../interface/sample.interface";
@@ -186,4 +187,55 @@ export async function deleteSample(currentResearcherId: string, sampleId: string
     await researcher.save();
 
     return true;
+}
+
+interface IRequiredDoc {
+    jsonFileKey: string;
+    backendFileName: string;
+    label: string;
+}
+
+export async function getRequiredDocs(sampleId: string) {
+    if (!mongoose.Types.ObjectId.isValid(sampleId)) {
+        throw new Error("Sample id is invalid.");
+    }
+
+    const researcher = await ResearcherModel.findOne(
+        { "researchSamples._id": sampleId },
+        {
+            "researchSamples._id": 1,
+            "researchSamples.researchCep.tcleDocument": 1,
+            "researchSamples.researchCep.taleDocument": 1,
+        }
+    );
+
+    if (!researcher || !researcher.researchSamples) {
+        throw new Error("Sample not found!");
+    }
+
+    const sample = researcher.researchSamples.find((sample) => sample._id?.toString() === sampleId);
+
+    if (!sample) {
+        throw new Error("Sample not found!");
+    }
+
+    const docs: IRequiredDoc[] = [];
+
+    if (sample.researchCep.taleDocument) {
+        docs.push({
+            jsonFileKey: "taleDocument",
+            backendFileName: sample.researchCep.taleDocument,
+            label: "Termo de Anuência Livre e Esclarecido",
+        });
+    }
+
+    if (sample.researchCep.tcleDocument) {
+        docs.push({
+            jsonFileKey: "tcleDocument",
+            backendFileName: sample.researchCep.tcleDocument,
+            label: "Termo de Compromisso Livre e Esclarecido",
+        });
+    }
+
+    return docs;
 }
