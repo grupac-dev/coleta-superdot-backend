@@ -5,6 +5,7 @@ import {
     GENDER_ARRAY,
     INCOME_LEVELS_ARRAY,
     MARITAL_STATUS_ARRAY,
+    RELATIONSHIPS_ARRAY,
 } from "../util/consts";
 import { DateTime } from "luxon";
 import validator from "validator";
@@ -72,3 +73,27 @@ export const adultFormAcceptDocsDTO = object({
 });
 
 export type AdultFormAcceptDocsDTO = z.infer<typeof adultFormAcceptDocsDTO>;
+
+/** INDICATE SECOND SOURCE */
+const adultFormIndicateSecondSourceBody = object({
+    secondSources: array(
+        object({
+            relationship: z.enum(RELATIONSHIPS_ARRAY, { required_error: "Invalid relationship!" }),
+            fullName: string({ required_error: "Second source name is required." }),
+            email: string({ required_error: "Second source email is required." }).email("Invalid e-mail."),
+            teacherSubject: string().optional(),
+        }),
+        { required_error: "Second source array is required!" }
+    ),
+});
+
+const adultFormIndicateSecondSourceParams = object({
+    sampleId: string({ required_error: "Sample id param is required!" }),
+});
+
+export const adultFormIndicateSecondSourceDTO = object({
+    body: adultFormIndicateSecondSourceBody,
+    params: adultFormIndicateSecondSourceParams,
+});
+
+export type AdultFormIndicateSecondSourceDTO = z.infer<typeof adultFormIndicateSecondSourceDTO>;
