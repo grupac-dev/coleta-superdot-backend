@@ -1,4 +1,5 @@
 import { DeviceType, EducationLevelType, GenderType, IncomeLevelType, MaritalStatusType } from "../util/consts";
+import { ISecondSource } from "./secondSource.interface";
 
 export interface IParticipant {
     _id?: string;
@@ -29,4 +30,5 @@ export interface IParticipant {
     };
     acceptTcle?: boolean;
     acceptTale?: boolean;
+    secondSources?: ISecondSource[];
 }
