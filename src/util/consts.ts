@@ -44,3 +44,6 @@ export type IncomeLevelType = (typeof INCOME_LEVELS_ARRAY)[number];
 export const DEVICES_ARRAY = ["TV", "TV Cabo", "Computador", "Telefone", "Celular", "Internet"] as const;
 
 export type DeviceType = (typeof DEVICES_ARRAY)[number];
+
+export const RELATIONSHIPS_ARRAY = ["Amigo", "Parente", "Professor"] as const;
+export type RelationshipsType = (typeof RELATIONSHIPS_ARRAY)[number];
