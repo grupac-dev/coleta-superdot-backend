@@ -10,6 +10,8 @@ import { sampleRouter } from "./route/sample.route";
 import { sampleReviewRouter } from "./route/sampleReview.route";
 import { adultFormRoute } from "./route/adultForm.route";
 import { deserializeParticipantJWT } from "./middleware/deserializeParticipantJWT";
+import { participantRouter } from "./route/participant.route";
+import { secondSourceRouter } from "./route/secondSource.route";
 
 const app = express();
 
@@ -33,6 +35,10 @@ app.use("/api/sample", sampleRouter);
 app.use("/api/sampleReview", sampleReviewRouter);
 
 app.use("/api/adultForm", adultFormRoute);
+
+app.use("/api/participant", participantRouter);
+
+app.use("/api/secondSource", secondSourceRouter);
 
 app.use((req, res, next) => {
     next(createHttpError(404, "Endpoint not found"));
