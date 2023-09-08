@@ -5,6 +5,7 @@ import {
     createSampleDTO,
     deleteSampleDTO,
     editSampleDTO,
+    getParticipantRegistrationProgressDTO,
     getRequiredDocsDTO,
     paginateAllSampleDTO,
     paginateSampleDTO,
@@ -12,7 +13,6 @@ import {
 import { validateDTO } from "../middleware/validateDTO.middleware";
 import { uploaderConfig } from "../util/uploader";
 import { requireRole } from "../middleware/requireRole.middleware";
-import { protectResource } from "../middleware/protectResource.middleware";
 import { requireParticipantJWT } from "../middleware/requireParticipantJWT";
 
 const sampleRouter = express.Router();
@@ -58,6 +58,13 @@ sampleRouter.delete(
     "/deleteSample/:sampleId",
     [validateDTO(deleteSampleDTO), requireActiveSession],
     SampleController.deleteSample
+);
+
+sampleRouter.get(
+    "/participantRegistrationProgress/:sampleId",
+    validateDTO(getParticipantRegistrationProgressDTO),
+    requireActiveSession,
+    SampleController.handlerGetParticipantRegistrationProgress
 );
 
 export { sampleRouter };
