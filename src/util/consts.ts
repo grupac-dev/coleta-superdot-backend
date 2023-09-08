@@ -47,3 +47,54 @@ export type DeviceType = (typeof DEVICES_ARRAY)[number];
 
 export const RELATIONSHIPS_ARRAY = ["Amigo", "Parente", "Professor"] as const;
 export type RelationshipsType = (typeof RELATIONSHIPS_ARRAY)[number];
+
+export enum EQuestionType {
+    LIMITED_OPTIONS = 0, // Five options to choose ONE
+    FOUR_INPUTS = 1, // Four mandatory inputs
+    MULTIPLE_OPTIONS = 2, // Various options to choose FOUR
+    OTHER_INPUT = 3, // Input that is dependant from the previous question answer
+    MULTIPLE_SELECT = 4, // A Select with multiple options attribute
+}
+
+export enum EAdultFormGroup {
+    GENERAL_CHARACTERISTICS = 0,
+    HIGH_ABILITIES = 1,
+    CRIATIVITY = 2,
+    TASK_COMMITMENT = 3,
+    LEADERSHIP = 4,
+    ARTISTIC_ACTIVITIES = 5,
+}
+
+export enum EAdultFormSteps {
+    CHOOSE_PATH = 0,
+    PARTICIPANT_DATA = 1,
+    READ_AND_ACCEPT_DOCS = 2,
+    INDICATE_SECOND_SOURCE = 3,
+    GENERAL_CHARACTERISTICS = 4,
+    HIGH_ABILITIES = 5,
+    CRIATIVITY = 6,
+    TASK_COMMITMENT = 7,
+    LEADERSHIP = 8,
+    ARTISTIC_ACTIVITIES = 9,
+    AUTOBIOGRAPHY = 10,
+    FINISHED = 11,
+}
+
+export enum EAdultFormSource {
+    FIRST_SOURCE = 0,
+    SECOND_SOURCE = 1,
+}
+
+export const SESSION_VALID_TIME_IN_MILISECONDS = 1000 * 60 * 60; // 1 hour
+
+export type TParticipantFormProgress = "Preenchendo" | "Aguardando 2ª fonte" | "Finalizado";
+
+export const RELATIONSHIP_TIME_ARRAY = [
+    "De 0 à 2 anos",
+    "Entre 2 e 3 anos",
+    "Entre 3 e 4 anos",
+    "Entre 4 e 5 anos",
+    "Mais de 5 anos",
+] as const;
+
+export type TRelationshipTime = (typeof RELATIONSHIP_TIME_ARRAY)[number];
