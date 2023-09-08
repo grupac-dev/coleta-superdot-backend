@@ -1,5 +1,5 @@
 import { Schema, Types, model } from "mongoose";
-import ISession from "../interface/session.interface";
+import { ISession } from "../interface/session.interface";
 
 const sessionSchema = new Schema<ISession>(
     {
@@ -11,7 +11,6 @@ const sessionSchema = new Schema<ISession>(
             type: Boolean,
             default: true,
         },
-        userAgent: String,
     },
     {
         timestamps: true,
