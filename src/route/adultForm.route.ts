@@ -1,33 +1,30 @@
 import express from "express";
 import { validateDTO } from "../middleware/validateDTO.middleware";
-import {
-    adultFormAcceptDocsDTO,
-    adultFormIndicateSecondSourceDTO,
-    adultFormParticipantDataDTO,
-} from "../dto/adultForm.dto";
+import { adultFormAllQuestionsByGroupDTO, adultFormSubmitQuestionsByGroupDTO } from "../dto/adultForm.dto";
 import * as AdultFormController from "../controller/adultForm.controller";
 import { requireParticipantJWT } from "../middleware/requireParticipantJWT";
 
 const adultFormRoute = express.Router();
 
-adultFormRoute.post(
-    "/startFillForm/:sampleId",
-    validateDTO(adultFormParticipantDataDTO),
-    AdultFormController.handlerStartFillForm
+adultFormRoute.get(
+    "/allQuestionsByGroup/:groupSequence/source/:formSource",
+    validateDTO(adultFormAllQuestionsByGroupDTO),
+    requireParticipantJWT,
+    AdultFormController.handlerGetQuestionsByGroup
 );
 
 adultFormRoute.patch(
-    "/acceptDocs/sample/:sampleId/participant/:participantId",
-    validateDTO(adultFormAcceptDocsDTO),
+    "/submitGroupQuestions/sample/:sampleId",
+    validateDTO(adultFormSubmitQuestionsByGroupDTO),
     requireParticipantJWT,
-    AdultFormController.handlerAcceptDocs
+    AdultFormController.handlerSubmitQuestionsByGroup
 );
 
-adultFormRoute.post(
-    "/indicateSecondSource/sample/:sampleId",
-    validateDTO(adultFormIndicateSecondSourceDTO),
+adultFormRoute.patch(
+    "/submitGroupQuestions/sample/:sampleId/participant/:participantId",
+    validateDTO(adultFormSubmitQuestionsByGroupDTO),
     requireParticipantJWT,
-    AdultFormController.handlerIndicateSecondSources
+    AdultFormController.handlerSubmitQuestionsByGroup
 );
 
 export { adultFormRoute };
