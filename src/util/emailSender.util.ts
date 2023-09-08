@@ -67,6 +67,8 @@ interface IEmailSecondSourceINdication {
     secondSourceEmail: string;
     participantName: string;
     participantEmail: string;
+    sampleId: string;
+    participantId: string;
 }
 
 export const dispatchSecondSourceIndicationEmail = (body: IEmailSecondSourceINdication) => {
@@ -81,7 +83,7 @@ export const dispatchSecondSourceIndicationEmail = (body: IEmailSecondSourceINdi
                 secondSourceName: body.secondSourceName,
                 participantName: body.participantName,
                 participantEmail: body.participantEmail,
-                systemURL: env.FRONT_END_URL,
+                systemURL: `${env.FRONT_END_URL}/formulario-adulto-segunda-fonte/${body.sampleId}/${body.participantId}`,
             },
         })
         .then(console.log)
@@ -89,8 +91,8 @@ export const dispatchSecondSourceIndicationEmail = (body: IEmailSecondSourceINdi
 };
 
 interface IEmailParticipantVerification {
-    participantName: string;
-    verificationCode: string;
+    participantName?: string;
+    verificationCode: number;
     participantEmail: string;
 }
 
@@ -104,6 +106,30 @@ export const dispatchParticipantVerificationEmail = (body: IEmailParticipantVeri
             },
             locals: {
                 participantName: body.participantName,
+                verificationCode: body.verificationCode,
+            },
+        })
+        .then(console.log)
+        .catch(console.error);
+};
+
+interface IEmailSecondSourceVerification {
+    secondSourceName?: string;
+    verificationCode: number;
+    secondSourceEmail: string;
+}
+
+export const dispatchSecondSourceVerificationEmail = (body: IEmailSecondSourceVerification) => {
+    email
+        .send({
+            template: "verifySecondSource",
+            message: {
+                to: body.secondSourceEmail,
+                subject: "SuperDot - Seu código de verificação.",
+            },
+            locals: {
+                secondSourceName: body.secondSourceName,
+                participantName: body.secondSourceName,
                 verificationCode: body.verificationCode,
             },
         })
