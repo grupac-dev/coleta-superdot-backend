@@ -1,4 +1,12 @@
-import { DeviceType, EducationLevelType, GenderType, IncomeLevelType, MaritalStatusType } from "../util/consts";
+import {
+    DeviceType,
+    EAdultFormSteps,
+    EducationLevelType,
+    GenderType,
+    IncomeLevelType,
+    MaritalStatusType,
+} from "../util/consts";
+import IQuestionsGroup from "./adultForm/questionsGroup.interface";
 import { ISecondSource } from "./secondSource.interface";
 
 export interface IParticipant {
@@ -31,4 +39,14 @@ export interface IParticipant {
     acceptTcle?: boolean;
     acceptTale?: boolean;
     secondSources?: ISecondSource[];
+    adultFormAnswers?: IQuestionsGroup[];
+    adultFormCurrentStep?: EAdultFormSteps;
+    autobiography?: {
+        text?: string;
+        videoUrl?: string;
+    };
+    endFillFormDate?: Date;
+    giftdnessIndicators?: boolean;
+    createdAt?: Date;
+    updatedAt?: Date;
 }
