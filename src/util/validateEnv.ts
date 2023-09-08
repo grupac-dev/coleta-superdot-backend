@@ -18,4 +18,5 @@ export default cleanEnv(process.env, {
     EMAIL_USER: str(),
     EMAIL_PASS: str(),
     FRONT_END_URL: str(),
+    PARTICIPANT_TOKEN_TTL: str(),
 });
