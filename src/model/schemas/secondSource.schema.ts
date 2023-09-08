@@ -1,6 +1,7 @@
 import { Schema } from "mongoose";
-import { RELATIONSHIPS_ARRAY } from "../../util/consts";
+import { EAdultFormGroup, EAdultFormSteps, RELATIONSHIPS_ARRAY, RELATIONSHIP_TIME_ARRAY } from "../../util/consts";
 import { ISecondSource } from "../../interface/secondSource.interface";
+import { questionSchema } from "../adultForm/schemas/question.schema";
 
 export const secondSourceSchema = new Schema<ISecondSource>(
     {
@@ -17,7 +18,6 @@ export const secondSourceSchema = new Schema<ISecondSource>(
                     /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/,
                     "E-mail should be valid",
                 ],
-                unique: true,
                 trim: true,
                 lowercase: true,
                 required: [true, "Second source is required!"],
@@ -28,12 +28,40 @@ export const secondSourceSchema = new Schema<ISecondSource>(
                 enum: RELATIONSHIPS_ARRAY,
                 required: [true, "Second source relationship is required!"],
             },
+            relationshipTime: {
+                type: String,
+                enum: RELATIONSHIP_TIME_ARRAY,
+            },
             job: String,
             occupation: String,
+            street: String,
+            district: String,
+            countryCity: String,
             phone: String,
             educationLevel: String,
         },
+        acceptTale: Boolean,
+        acceptTcle: Boolean,
         teacherSubject: String,
+        indicated: Boolean,
+        adultFormCurrentStep: {
+            type: Number,
+            enum: EAdultFormSteps,
+        },
+        adultFormAnswers: [
+            {
+                groupName: {
+                    type: String,
+                    required: [true, "Group name is required!"],
+                },
+                sequence: {
+                    type: Number,
+                    enum: EAdultFormGroup,
+                    required: [true, "Group sequence is required!"],
+                },
+                questions: [questionSchema],
+            },
+        ],
     },
     {
         timestamps: true,
