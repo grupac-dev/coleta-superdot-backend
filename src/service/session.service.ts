@@ -1,6 +1,6 @@
 import { FilterQuery, Types, UpdateQuery } from "mongoose";
 import SessionModel from "../model/session.model";
-import ISession from "../interface/session.interface";
+import { ISession } from "../interface/session.interface";
 import { signJwt, verifyJwt } from "../util/jwt";
 import { get } from "lodash";
 import { findResearcher } from "./researcher.service";

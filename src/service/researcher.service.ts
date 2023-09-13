@@ -59,7 +59,8 @@ export async function paginateResearchers(
                 ],
             },
             {
-                "personalData.fullName": true,
+                fullname: "$personalData.fullName",
+                role: true,
                 email: true,
             }
         )

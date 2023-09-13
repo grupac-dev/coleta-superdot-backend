@@ -1,99 +1,92 @@
-import { array, number, object, string, z } from "zod";
-import {
-    DEVICES_ARRAY,
-    EDUCATION_LEVEL_ARRAY,
-    GENDER_ARRAY,
-    INCOME_LEVELS_ARRAY,
-    MARITAL_STATUS_ARRAY,
-    RELATIONSHIPS_ARRAY,
-} from "../util/consts";
-import { DateTime } from "luxon";
-import validator from "validator";
+import { array, number, object, string, union, z } from "zod";
+import { EAdultFormGroup, EQuestionType } from "../util/consts";
+import mongoose from "mongoose";
 
-export const adultFormParticipantDataBody = object({
-    personalData: object({
-        fullName: string({
-            required_error: "Full name is required",
-        }).trim(),
-        phone: string({ required_error: "Phone is required" }),
-        email: string({ required_error: "Full name is required" }).email({ message: "Email invalid" }),
-        maritalStatus: z.enum(MARITAL_STATUS_ARRAY, { required_error: "The marital status is required" }),
-        job: string({ required_error: "Job is required" }),
-        occupation: string({ required_error: "Occupation is required" }),
-        educationLevel: z.enum(EDUCATION_LEVEL_ARRAY, { required_error: "Education level is required" }),
-        gender: z.enum(GENDER_ARRAY, { required_error: "Gender is required" }),
-        birthDate: string({
-            required_error: "Birth date is required",
-        }).transform((val, ctx) => {
-            if (!validator.isISO8601(val)) {
+/** GET QUESTIONS BY GROUP */
+export const adultFormAllQuestionsByGroupDTO = object({
+    params: object({
+        formSource: string({ required_error: "Group source is required!" }).transform((val, ctx) => {
+            if (Number.isNaN(val)) {
                 ctx.addIssue({
                     code: z.ZodIssueCode.custom,
-                    message: "Invalid date!",
+                    message: "Form source is not a number.",
                 });
             }
 
-            return DateTime.fromISO(val).toJSDate();
+            return Number(val);
+        }),
+        groupSequence: string({ required_error: "Group sequence param is required!" }).transform((val, ctx) => {
+            if (Number.isNaN(val)) {
+                ctx.addIssue({
+                    code: z.ZodIssueCode.custom,
+
+                    message: "Group sequence is not a number.",
+                });
+            }
+
+            if (!Object.values(EAdultFormGroup).includes(Number(val))) {
+                ctx.addIssue({
+                    code: z.ZodIssueCode.custom,
+                    message: "Group sequence invalid.",
+                });
+            }
+
+            return Number(val);
         }),
     }),
-    familyData: object({
-        qttChildrens: number({ required_error: "Childrens quantity is required" }),
-        qttSiblings: number({ required_error: "Siblings quantity is required" }),
-        qttFamilyMembers: string({ required_error: "Family members quantity is required" }),
-        familyMonthIncome: z.enum(INCOME_LEVELS_ARRAY, { required_error: "The income level is required" }),
-        houseDevices: array(z.enum(DEVICES_ARRAY)).optional(),
-        outsideHouseDevices: array(z.enum(DEVICES_ARRAY)).optional(),
+});
+
+export type AdultFormAllQuestionsByGroupDTO = z.infer<typeof adultFormAllQuestionsByGroupDTO>;
+
+/** SUBMIT QUESTIONS */
+export const adultFormSubmitQuestionsByGroupDTO = object({
+    body: object({
+        groupName: string({ required_error: "Group name is required!" }),
+        sequence: number({ required_error: "Group sequence is required!" }),
+        questions: array(
+            object({
+                _id: string({ required_error: "Question id is required!" }),
+                sequence: number({ required_error: "Question sequence is required!" }),
+                statement: string({ required_error: "Question statement is required!" }),
+                questionType: number({ required_error: "Question type is required!" }).transform((val, ctx) => {
+                    if (!Object.values(EQuestionType).includes(Number(val))) {
+                        ctx.addIssue({
+                            code: z.ZodIssueCode.custom,
+                            message: "Question type is invalid.",
+                        });
+                    }
+
+                    return val;
+                }),
+                options: array(string()).optional(),
+                answer: union([array(string()), string()]).optional(),
+            }).transform((question, ctx) => {
+                if (Array.isArray(question.answer)) {
+                    if (question.questionType !== EQuestionType.MULTIPLE_SELECT && question.answer.length !== 4) {
+                        ctx.addIssue({
+                            code: z.ZodIssueCode.custom,
+                            message: "A multiple response answer needs to have an exact 4 answers.",
+                        });
+                    }
+                }
+
+                return question;
+            })
+        ),
     }),
-    addressData: object({
-        city: string({ required_error: "City is required" }),
-        district: string({ required_error: "District is required" }),
-        street: string({ required_error: "Street is required" }),
-        houseNumber: string({ required_error: "House number is required" }),
-    }),
-});
+    params: object({
+        sampleId: string({ required_error: "Sample id param is required!" }).transform((val, ctx) => {
+            if (!mongoose.Types.ObjectId.isValid(val)) {
+                ctx.addIssue({
+                    code: z.ZodIssueCode.custom,
+                    message: "Sample id param is a invalid ID.",
+                });
+            }
 
-const adultFormParticipantDataParams = object({
-    sampleId: string(),
-});
-
-export const adultFormParticipantDataDTO = object({
-    body: adultFormParticipantDataBody,
-    params: adultFormParticipantDataParams,
-});
-
-export type AdultFormParticipantDataDTO = z.infer<typeof adultFormParticipantDataDTO>;
-
-/*** TO ACCEPT DOCS */
-
-const adultFormAcceptDocsParams = object({
-    sampleId: string({ required_error: "Sample id param is required!" }),
-});
-
-export const adultFormAcceptDocsDTO = object({
-    params: adultFormAcceptDocsParams,
-});
-
-export type AdultFormAcceptDocsDTO = z.infer<typeof adultFormAcceptDocsDTO>;
-
-/** INDICATE SECOND SOURCE */
-const adultFormIndicateSecondSourceBody = object({
-    secondSources: array(
-        object({
-            relationship: z.enum(RELATIONSHIPS_ARRAY, { required_error: "Invalid relationship!" }),
-            fullName: string({ required_error: "Second source name is required." }),
-            email: string({ required_error: "Second source email is required." }).email("Invalid e-mail."),
-            teacherSubject: string().optional(),
+            return val;
         }),
-        { required_error: "Second source array is required!" }
-    ),
+        participantId: string().optional(),
+    }),
 });
 
-const adultFormIndicateSecondSourceParams = object({
-    sampleId: string({ required_error: "Sample id param is required!" }),
-});
-
-export const adultFormIndicateSecondSourceDTO = object({
-    body: adultFormIndicateSecondSourceBody,
-    params: adultFormIndicateSecondSourceParams,
-});
-
-export type AdultFormIndicateSecondSourceDTO = z.infer<typeof adultFormIndicateSecondSourceDTO>;
+export type AdultFormSubmitQuestionsByGroupDTO = z.infer<typeof adultFormSubmitQuestionsByGroupDTO>;

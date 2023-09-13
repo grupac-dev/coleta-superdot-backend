@@ -23,10 +23,6 @@ export const sampleSchema = new Schema<ISample>(
             required: [true, "Is necessary to inform the sample partcipants quantity requested."],
         },
         qttParticipantsAuthorized: Number,
-        qttParticipantsRegistered: {
-            type: Number,
-            default: 0,
-        },
         researchCep: {
             cepCode: {
                 type: String,

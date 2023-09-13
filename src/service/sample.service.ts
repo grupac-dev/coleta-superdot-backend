@@ -1,8 +1,9 @@
 import mongoose from "mongoose";
 import { Page } from "../interface/page.interface";
-import IResearcher from "../interface/researcher.interface";
 import ISample from "../interface/sample.interface";
 import ResearcherModel from "../model/researcher.model";
+import { ISampleParticipantSummay } from "../interface/sampleParticipantSummary";
+import { EAdultFormSteps, TParticipantFormProgress } from "../util/consts";
 
 export async function createSample(researcherId: string, sampleData: ISample): Promise<ISample> {
     const researcher = await ResearcherModel.findById(researcherId);
@@ -238,4 +239,46 @@ export async function getRequiredDocs(sampleId: string) {
     }
 
     return docs;
+}
+
+export async function getParticipantRegistrationProgress(
+    sampleId: string
+): Promise<ISampleParticipantSummay[] | undefined> {
+    if (!mongoose.Types.ObjectId.isValid(sampleId)) {
+        throw new Error("Sample id is invalid.");
+    }
+
+    const researcherDoc = await ResearcherModel.findOne({ "researchSamples._id": sampleId });
+
+    if (!researcherDoc || !researcherDoc.researchSamples) {
+        throw new Error("Sample not found.");
+    }
+
+    const sample = researcherDoc.researchSamples.find((sample) => sample._id?.toString() === sampleId);
+
+    if (!sample) {
+        throw new Error("Sample not found.");
+    }
+
+    const summary = sample.participants?.map((participant) => {
+        let progress: TParticipantFormProgress = "Aguardando 2ª fonte";
+        if (participant.adultFormCurrentStep !== EAdultFormSteps.FINISHED) {
+            progress = "Preenchendo";
+        } else if (participant.secondSources?.length) {
+            progress = "Finalizado";
+        }
+
+        return {
+            sampleId: sample._id as string,
+            participantId: participant._id as string,
+            fullName: participant.personalData.fullName,
+            progress,
+            qttSecondSources: participant.secondSources?.length || 0,
+            startDate: participant.createdAt as Date,
+            endDate: participant.endFillFormDate,
+            giftednessIndicators: participant.giftdnessIndicators,
+        };
+    });
+
+    return summary;
 }

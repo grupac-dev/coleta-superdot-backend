@@ -9,7 +9,6 @@ export default interface ISample {
     sampleGroup?: string; // Required only in POST actions, unnecessary in PUT actions
     qttParticipantsRequested: number;
     qttParticipantsAuthorized?: number; // Updated only by backend
-    qttParticipantsRegistered?: number; // Updated only by backend
     researchCep: {
         cepCode: string;
         researchDocument?: string;

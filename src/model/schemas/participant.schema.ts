@@ -2,12 +2,15 @@ import { Schema } from "mongoose";
 import { IParticipant } from "../../interface/participant.interface";
 import {
     DEVICES_ARRAY,
+    EAdultFormGroup,
+    EAdultFormSteps,
     EDUCATION_LEVEL_ARRAY,
     GENDER_ARRAY,
     INCOME_LEVELS_ARRAY,
     MARITAL_STATUS_ARRAY,
 } from "../../util/consts";
 import { secondSourceSchema } from "./secondSource.schema";
+import { questionSchema } from "../adultForm/schemas/question.schema";
 
 export const participantSchema = new Schema<IParticipant>(
     {
@@ -102,6 +105,28 @@ export const participantSchema = new Schema<IParticipant>(
         acceptTale: Boolean,
         acceptTcle: Boolean,
         secondSources: [secondSourceSchema],
+        adultFormAnswers: [
+            {
+                groupName: {
+                    type: String,
+                    required: [true, "Group name is required!"],
+                },
+                sequence: {
+                    type: Number,
+                    enum: EAdultFormGroup,
+                    required: [true, "Group sequence is required!"],
+                },
+                questions: [questionSchema],
+            },
+        ],
+        adultFormCurrentStep: {
+            type: Number,
+            enum: EAdultFormSteps,
+        },
+        autobiography: {
+            text: String,
+            videoUrl: String,
+        },
     },
     {
         timestamps: true,

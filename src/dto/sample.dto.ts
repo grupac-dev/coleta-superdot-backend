@@ -142,3 +142,13 @@ export const getRequiredDocsDTO = object({
 });
 
 export type GetRequiredDocsDTO = z.infer<typeof getRequiredDocsDTO>;
+
+/** PARTICIPANTS REGISTRATION PROGRESS */
+
+export const getParticipantRegistrationProgressDTO = object({
+    params: object({
+        sampleId: string({ required_error: "Sample id param is required!" }),
+    }),
+});
+
+export type GetParticipantRegistrationProgressDTO = z.infer<typeof getParticipantRegistrationProgressDTO>;
