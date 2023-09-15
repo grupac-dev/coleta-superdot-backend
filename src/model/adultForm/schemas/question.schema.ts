@@ -1,4 +1,4 @@
-import { Schema } from "mongoose";
+import mongoose, { Schema } from "mongoose";
 import IQuestion from "../../../interface/adultForm/question.interface";
 import { EQuestionType } from "../../../util/consts";
 
@@ -16,6 +16,14 @@ export const questionSchema = new Schema<IQuestion>({
         enum: EQuestionType,
         required: [true, "Question type is required!"],
     },
-    options: [String],
+    options: [
+        {
+            value: String,
+            points: Number,
+        },
+    ],
+    notRequired: Boolean,
+    constantPunctuation: Number,
     answer: Schema.Types.Mixed, // String | String[]
+    answerPoints: Number,
 });

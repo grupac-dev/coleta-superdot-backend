@@ -5,6 +5,12 @@ export default interface IQuestion {
     sequence: number;
     statement: string;
     questionType: EQuestionType;
-    options?: string[];
+    options?: {
+        value: string;
+        points?: number;
+    }[];
+    notRequired?: boolean;
+    constantPunctuation?: number;
     answer?: string | string[]; // Participant answer
+    answerPoints?: number;
 }
