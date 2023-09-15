@@ -157,7 +157,7 @@ export async function saveParticipantData(sampleId: string, participantData: IPa
     await researcherDoc.save();
 
     const participantCreated = sample.participants?.find(
-        (participant) => (participant.personalData.email = participantData.personalData.email)
+        (participant) => participant.personalData.email === participantData.personalData.email
     );
 
     if (!participantCreated || !participantCreated._id) {
