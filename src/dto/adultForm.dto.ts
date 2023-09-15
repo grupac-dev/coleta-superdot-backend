@@ -58,7 +58,6 @@ export const adultFormSubmitQuestionsByGroupDTO = object({
 
                     return val;
                 }),
-                options: array(string()).optional(),
                 answer: union([array(string()), string()]).optional(),
             }).transform((question, ctx) => {
                 if (Array.isArray(question.answer)) {
