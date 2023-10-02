@@ -16,10 +16,10 @@ export async function handlerValidateEmailInSample(
     res: Response
 ) {
     try {
-        const { participantEmail, startFilling } = req.body;
+        const { participantEmail } = req.body;
         const { sampleId } = req.params;
 
-        const valid = await ParticipantService.validateEmail(participantEmail, sampleId, startFilling);
+        const valid = await ParticipantService.validateEmail(participantEmail, sampleId);
 
         res.status(200).json(valid);
     } catch (e: any) {
@@ -43,15 +43,10 @@ export async function handlerValidateVerificationCode(
     res: Response
 ) {
     try {
-        const { participantEmail, verificationCode, startFilling } = req.body;
+        const { participantEmail, verificationCode } = req.body;
         const { sampleId } = req.params;
 
-        const token = await ParticipantService.validateVerificationCode(
-            participantEmail,
-            sampleId,
-            verificationCode,
-            startFilling
-        );
+        const token = await ParticipantService.validateVerificationCode(participantEmail, sampleId, verificationCode);
 
         res.status(200).json(token);
     } catch (e: any) {

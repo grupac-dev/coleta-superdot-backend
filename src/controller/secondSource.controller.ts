@@ -19,10 +19,10 @@ export async function handlerValidateEmailInParticipantSecondSources(
     res: Response
 ) {
     try {
-        const { secondSourceEmail, startFilling } = req.body;
+        const { secondSourceEmail } = req.body;
         const { participantId } = req.params;
 
-        const valid = await SecondSourceService.validateEmail(secondSourceEmail, participantId, startFilling);
+        const valid = await SecondSourceService.validateEmail(secondSourceEmail, participantId);
 
         res.status(200).json(valid);
     } catch (e: any) {

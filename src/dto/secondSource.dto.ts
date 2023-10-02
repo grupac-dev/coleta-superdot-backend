@@ -9,7 +9,6 @@ export const validateEmailInParticipantSecondSourcesDTO = object({
         secondSourceEmail: string({
             required_error: "Email is required!",
         }).email("Email is invalid!"),
-        startFilling: boolean(),
     }),
     params: object({
         sampleId: string({

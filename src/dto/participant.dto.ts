@@ -16,7 +16,6 @@ export const validateEmailInSampleDTO = object({
         participantEmail: string({
             required_error: "Email is required!",
         }).email("Email is invalid!"),
-        startFilling: boolean(),
     }),
     params: object({
         sampleId: string({
@@ -36,7 +35,6 @@ export const validateVerificationCodeDTO = object({
         verificationCode: number({
             required_error: "Verification code is required!",
         }),
-        startFilling: boolean(),
     }),
     params: object({
         sampleId: string({
