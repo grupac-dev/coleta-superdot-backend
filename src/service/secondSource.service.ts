@@ -45,28 +45,8 @@ export async function getSecondSourceByEmailAndParticipantId(email: string, part
     return secondSource[0];
 }
 
-export async function validateEmail(secondSourceEmail: string, participantId: string, startFilling: boolean) {
+export async function validateEmail(secondSourceEmail: string, participantId: string) {
     const secondSource = await getSecondSourceByEmailAndParticipantId(secondSourceEmail, participantId);
-
-    // Email already exists and the second source start the fill out
-    if (secondSource && startFilling) {
-        console.log(secondSource);
-        // First case: Second source not indicated by the participant, so is email duplication.
-        if (!secondSource.data.indicated) {
-            throw new EmailAlreadyRegisteredError("Email already registered!");
-        }
-        // If was indicated, then continue because the object (and the email) actually was registered in the DB.
-
-        // Second case: Second source indicated, but already started the form fill, so cannot start again.
-        if ((secondSource.data.adultFormCurrentStep || 0) > 0) {
-            throw new EmailAlreadyRegisteredError("Email already registered!");
-        }
-        // If dont start yet, generate a code to validate...
-
-        // The second source choose to continue the form fill, but the participant object was not found.
-    } else if (!secondSource && !startFilling) {
-        throw new ObjectNotExists("Participant not exists!");
-    }
 
     const validationCode = Math.round(Math.random() * TO_GET_SIX_DIGITS_CODE);
 
@@ -172,6 +152,8 @@ export async function saveSecondSourceData(sampleId: string, participantId: stri
                                 secondSourceData.personalData,
                             "researchSamples.$[].participants.$[partDoc].secondSources.$[secSource].adultFormCurrentStep":
                                 secondSourceData.adultFormCurrentStep,
+                            "researchSamples.$[].participants.$[partDoc].secondSources.$[secSource].startFillFormDate":
+                                new Date(),
                         },
                     },
                     {
@@ -189,12 +171,14 @@ export async function saveSecondSourceData(sampleId: string, participantId: stri
         return issueParticipantToken(secondSourceIndicated.personalData.email, secondSourceIndicated?._id);
     }
 
+    secondSourceData.startFillFormDate = new Date().toISOString();
+
     participant.secondSources?.push(secondSourceData);
 
     await researcherDoc.save();
 
     const secondSourceCreated = participant.secondSources?.find(
-        (participant) => (participant.personalData.email = secondSourceData.personalData.email)
+        (participant) => participant.personalData.email === secondSourceData.personalData.email
     );
 
     if (!secondSourceCreated || !secondSourceCreated._id) {
@@ -246,11 +230,11 @@ export async function acceptAllSampleDocs(sampleId: string, participantId: strin
     }
 
     if (sample.researchCep.taleDocument) {
-        secondSource.acceptTale = true;
+        secondSource.acceptTaleIn = new Date();
     }
 
     if (sample.researchCep.tcleDocument) {
-        participant.acceptTcle = true;
+        participant.acceptTcleIn = new Date();
     }
 
     // Second step finished. Set the next step

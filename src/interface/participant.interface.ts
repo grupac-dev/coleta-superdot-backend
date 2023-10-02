@@ -36,8 +36,8 @@ export interface IParticipant {
         street: string;
         houseNumber: string;
     };
-    acceptTcle?: boolean;
-    acceptTale?: boolean;
+    acceptTcleIn?: Date;
+    acceptTaleIn?: Date;
     secondSources?: ISecondSource[];
     adultFormAnswers?: IQuestionsGroup[];
     adultFormCurrentStep?: EAdultFormSteps;

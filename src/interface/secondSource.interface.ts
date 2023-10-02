@@ -18,11 +18,12 @@ export interface ISecondSource {
         educationLevel?: EducationLevelType;
     };
     indicated?: boolean;
-    acceptTcle?: boolean;
-    acceptTale?: boolean;
+    acceptTcleIn?: Date;
+    acceptTaleIn?: Date;
     teacherSubject?: string;
     adultFormCurrentStep?: EAdultFormSteps;
     adultFormAnswers?: IQuestionsGroup[];
+    startFillFormDate?: string;
     endFillFormDate?: string;
     createdAt?: string;
 }

@@ -12,16 +12,8 @@ import { EmailAlreadyRegisteredError, ObjectNotExists } from "../error/participa
 
 const TO_GET_SIX_DIGITS_CODE = 1000000;
 
-export async function validateEmail(participantEmail: string, sampleId: string, startFilling: boolean) {
+export async function validateEmail(participantEmail: string, sampleId: string) {
     const { participant } = await getParticipantByEmail(participantEmail, sampleId);
-
-    if (startFilling && participant) {
-        throw new EmailAlreadyRegisteredError("Email already registered!");
-    }
-
-    if (!startFilling && !participant) {
-        throw new ObjectNotExists("Participant not exists!");
-    }
 
     const validationCode = Math.round(Math.random() * TO_GET_SIX_DIGITS_CODE);
 
@@ -51,8 +43,7 @@ interface CodeValidated {
 export async function validateVerificationCode(
     participantEmail: string,
     sampleId: string,
-    code: number,
-    startFilling: boolean
+    code: number
 ): Promise<CodeValidated> {
     const session = await ParticipantSessionModel.findOne(
         { participantEmail, validSession: true },
@@ -195,11 +186,11 @@ export async function acceptAllSampleDocs(sampleId: string, participantId: strin
     }
 
     if (sample.researchCep.taleDocument) {
-        participant.acceptTale = true;
+        participant.acceptTaleIn = new Date();
     }
 
     if (sample.researchCep.tcleDocument) {
-        participant.acceptTcle = true;
+        participant.acceptTcleIn = new Date();
     }
 
     // Second step finished. Set the next step

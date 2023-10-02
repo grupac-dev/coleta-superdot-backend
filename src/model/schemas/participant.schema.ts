@@ -102,8 +102,8 @@ export const participantSchema = new Schema<IParticipant>(
                 required: [true, "Participant houseNumber is required!"],
             },
         },
-        acceptTale: Boolean,
-        acceptTcle: Boolean,
+        acceptTaleIn: Date,
+        acceptTcleIn: Date,
         secondSources: [secondSourceSchema],
         adultFormAnswers: [
             {
@@ -119,6 +119,7 @@ export const participantSchema = new Schema<IParticipant>(
                 questions: [questionSchema],
             },
         ],
+        endFillFormDate: Date,
         adultFormCurrentStep: {
             type: Number,
             enum: EAdultFormSteps,
