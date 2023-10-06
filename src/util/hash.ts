@@ -2,7 +2,7 @@ import bcrypt from "bcrypt";
 import env from "./validateEnv";
 
 export function hashContent(rawContent: string) {
-    return bcrypt.hashSync(rawContent, env.SALT_WORK_FACTOR);
+    return bcrypt.hashSync(rawContent, env.SALT_STRING);
 }
 
 export async function compareHashes(rawText: string, hashedContent: string) {
