@@ -49,11 +49,11 @@ export const RELATIONSHIPS_ARRAY = ["Amigo", "Parente", "Professor"] as const;
 export type RelationshipsType = (typeof RELATIONSHIPS_ARRAY)[number];
 
 export enum EQuestionType {
-    LIMITED_OPTIONS = 0, // Five options to choose ONE
-    FOUR_INPUTS = 1, // Four mandatory inputs
-    MULTIPLE_OPTIONS = 2, // Various options to choose FOUR
-    OTHER_INPUT = 3, // Input that is dependant from the previous question answer
-    MULTIPLE_SELECT = 4, // A Select with multiple options attribute
+    ONE_INPUT = 0, // One simple HTML input text
+    FOUR_INPUT = 1, // Four simple HTML input text
+    FIVE_OPTION = 2, // Five HTML Radio boxes (or similary logic with buttons)
+    MULTIPLE_SELECT = 3, // One HTML select with multiple attribute define
+    FOUR_SELECT = 4, // Four HTML selects
 }
 
 export enum EAdultFormGroup {
@@ -85,7 +85,7 @@ export enum EAdultFormSource {
     SECOND_SOURCE = 1,
 }
 
-export const SESSION_VALID_TIME_IN_MILISECONDS = 1000 * 60 * 60; // 1 hour
+export const VERIFICATION_CODE_VALID_TIME_IN_MILISECONDS = 1000 * 60 * 60; // 1 hour
 
 export type TParticipantFormProgress = "Preenchendo" | "Aguardando 2ª fonte" | "Finalizado";
 
