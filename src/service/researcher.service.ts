@@ -4,6 +4,7 @@ import ResearcherModel from "../model/researcher.model";
 import { omit } from "lodash";
 import { compareHashes } from "../util/hash";
 import { getSampleById } from "./sample.service";
+import { findParticipantById } from "./participant.service";
 
 export async function createResearcher(researcherData: IResearcher): Promise<IResearcher> {
     try {
@@ -140,4 +141,22 @@ export async function isAttachmentOwner(fileName: string, researcherId: string) 
 export async function getResearcherNameBySampleId(sampleId: string) {
     const { researcherDoc } = await getSampleById({ sampleId });
     return researcherDoc.personalData.fullName;
+}
+
+interface GetResearchDataBySampleIdAndParticipantIdParams {
+    sampleId: string;
+    participantId: string;
+}
+
+export async function getResearchDataBySampleIdAndParticipantId({
+    sampleId,
+    participantId,
+}: GetResearchDataBySampleIdAndParticipantIdParams) {
+    const { researcherDoc, sample } = await getSampleById({ sampleId });
+    const participant = findParticipantById({ sample, participantId });
+
+    return {
+        researcherName: researcherDoc.personalData.fullName,
+        participantName: participant.personalData?.fullName,
+    };
 }
