@@ -7,3 +7,5 @@ class ParticipantError extends Error {
 export class EmailAlreadyRegisteredError extends ParticipantError {}
 
 export class ObjectNotExists extends ParticipantError {}
+
+export class FormAlreadyFinished extends ParticipantError {}
