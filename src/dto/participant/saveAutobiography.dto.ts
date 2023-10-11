@@ -17,6 +17,9 @@ export const saveAutobiographySchema = object({
     params: object({
         sampleId: string({ required_error: "Sample id param is required!" }),
     }),
+    query: object({
+        submitForm: string().optional(),
+    }),
 });
 
 export type SaveAutobiographyDTO = z.infer<typeof saveAutobiographySchema>;

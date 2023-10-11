@@ -1,27 +1,30 @@
 import { Request, Response } from "express";
 import * as ParticipantService from "../service/participant.service";
-import {
-    ParticipantAcceptAllSampleDocsDTO,
-    ParticipantDataDTO,
-    ParticipantIndicateSecondSourcesDTO,
-    ParticipantSubmitAutobiographyDTO,
-    ValidateEmailInSampleDTO,
-    ValidateVerificationCodeDTO,
-} from "../dto/participant.dto";
 import { IParticipant } from "../interface/participant.interface";
-import { EmailAlreadyRegisteredError, ObjectNotExists } from "../error/participant.error";
+import { EmailAlreadyRegisteredError, FormAlreadyFinished, ObjectNotExists } from "../error/participant.error";
+import { PartialDeep } from "type-fest";
+import { SendValidationEmailDTO } from "../dto/participant/sendValidationEmail.dto";
+import { VerifyValidationCodeDTO } from "../dto/participant/verifyValidationCode.dto";
+import { ParticipantDataDTO } from "../dto/participant/participant.dto";
+import { AcceptAllSampleDocsDTO } from "../dto/participant/acceptDocs.dto";
+import { SaveAutobiographyDTO } from "../dto/participant/saveAutobiography.dto";
+import { SaveSecondSourcesDTO } from "../dto/participant/saveSecondSources.dto";
+import { ISecondSource } from "../interface/secondSource.interface";
+import { GetInfoDTO } from "../dto/participant/getInfo.dto";
+import { getSampleById } from "../service/sample.service";
+import { finishForm } from "../service/adultForm.service";
 
 export async function handlerValidateEmailInSample(
-    req: Request<ValidateEmailInSampleDTO["params"], {}, ValidateEmailInSampleDTO["body"], {}>,
+    req: Request<SendValidationEmailDTO["params"], {}, SendValidationEmailDTO["body"], {}>,
     res: Response
 ) {
     try {
         const { participantEmail } = req.body;
         const { sampleId } = req.params;
 
-        const valid = await ParticipantService.validateEmail(participantEmail, sampleId);
+        const sent = await ParticipantService.sendEmailVerification({ participantEmail, sampleId });
 
-        res.status(200).json(valid);
+        res.status(201).json(sent);
     } catch (e: any) {
         console.log(e);
 
@@ -33,22 +36,29 @@ export async function handlerValidateEmailInSample(
             return res.status(404).send(e.message);
         }
 
+        if (e instanceof FormAlreadyFinished) {
+            return res.status(401).send(e.message);
+        }
+
         // TO DO errors handlers
         res.status(500).send(e.message);
     }
 }
 
 export async function handlerValidateVerificationCode(
-    req: Request<ValidateVerificationCodeDTO["params"], {}, ValidateVerificationCodeDTO["body"], {}>,
+    req: Request<VerifyValidationCodeDTO["params"], {}, {}, {}>,
     res: Response
 ) {
     try {
-        const { participantEmail, verificationCode } = req.body;
-        const { sampleId } = req.params;
+        const { sampleId, participantId, verificationCode } = req.params;
 
-        const token = await ParticipantService.validateVerificationCode(participantEmail, sampleId, verificationCode);
+        const data = await ParticipantService.validateEmailVerificationCode({
+            participantId,
+            sampleId,
+            code: verificationCode,
+        });
 
-        res.status(200).json(token);
+        res.status(200).json(data);
     } catch (e: any) {
         console.log(e);
 
@@ -57,17 +67,52 @@ export async function handlerValidateVerificationCode(
     }
 }
 
+export async function handlerSaveParticipantData(
+    req: Request<ParticipantDataDTO["params"], {}, ParticipantDataDTO["body"], {}>,
+    res: Response
+) {
+    try {
+        const participantData: PartialDeep<IParticipant> = req.body;
+        const { sampleId } = req.params;
+
+        const participantId = res.locals.participantId;
+
+        if (!participantId) {
+            throw Error("Invalid participant JWT.");
+        }
+
+        const saved = await ParticipantService.saveParticipantData({ sampleId, participantId, participantData });
+
+        res.status(200).json(saved);
+    } catch (e: any) {
+        console.log(e);
+
+        if (e instanceof ObjectNotExists) {
+            return res.status(404).send(e.message);
+        }
+
+        // TO DO errors handlers
+        res.status(500).send(e.message);
+    }
+}
+
 export async function handlerSubmitParticipantData(
     req: Request<ParticipantDataDTO["params"], {}, ParticipantDataDTO["body"], {}>,
     res: Response
 ) {
     try {
-        const participantData: IParticipant = req.body;
+        const participantData: PartialDeep<IParticipant> = req.body;
         const { sampleId } = req.params;
 
-        const token = await ParticipantService.saveParticipantData(sampleId, participantData);
+        const participantId = res.locals.participantId;
 
-        res.status(201).json(token);
+        if (!participantId) {
+            throw Error("Invalid participant JWT.");
+        }
+
+        const success = await ParticipantService.submitParticipantData({ sampleId, participantId, participantData });
+
+        res.status(200).json(success);
     } catch (e: any) {
         console.log(e);
 
@@ -81,7 +126,7 @@ export async function handlerSubmitParticipantData(
 }
 
 export async function handlerAcceptAllSampleDocs(
-    req: Request<ParticipantAcceptAllSampleDocsDTO["params"], {}, {}, {}>,
+    req: Request<AcceptAllSampleDocsDTO["params"], {}, {}, {}>,
     res: Response
 ) {
     try {
@@ -93,7 +138,7 @@ export async function handlerAcceptAllSampleDocs(
             throw Error("Invalid participant JWT.");
         }
 
-        const accepted = await ParticipantService.acceptAllSampleDocs(sampleId, participantId);
+        const accepted = await ParticipantService.acceptAllSampleDocs({ sampleId, participantId });
 
         if (!accepted) {
             throw Error("Cannot accept sample docs.");
@@ -108,8 +153,8 @@ export async function handlerAcceptAllSampleDocs(
     }
 }
 
-export async function handlerIndicateSecondSources(
-    req: Request<ParticipantIndicateSecondSourcesDTO["params"], {}, ParticipantIndicateSecondSourcesDTO["body"], {}>,
+export async function handlerSaveSecondSources(
+    req: Request<SaveSecondSourcesDTO["params"], {}, SaveSecondSourcesDTO["body"], {}>,
     res: Response
 ) {
     try {
@@ -121,7 +166,11 @@ export async function handlerIndicateSecondSources(
             throw Error("Invalid participant JWT.");
         }
 
-        const created = await ParticipantService.saveSecondSources(sampleId, participantId, secondSources);
+        const created = await ParticipantService.saveSecondSources({
+            sampleId,
+            participantId,
+            secondSources: secondSources as ISecondSource[],
+        });
 
         if (!created) {
             throw Error("Cannot accept save the second source info.");
@@ -136,31 +185,58 @@ export async function handlerIndicateSecondSources(
     }
 }
 
-export async function handlerSubmitAutobiography(
-    req: Request<ParticipantSubmitAutobiographyDTO["params"], {}, ParticipantSubmitAutobiographyDTO["body"], {}>,
+export async function handlerSaveAutobiography(
+    req: Request<SaveAutobiographyDTO["params"], {}, SaveAutobiographyDTO["body"], SaveAutobiographyDTO["query"]>,
     res: Response
 ) {
     try {
         const { sampleId } = req.params;
         const { autobiographyText, autobiographyVideo } = req.body;
+        const submitForm = req.query.submitForm === "true";
 
         const participantId = res.locals.participantId;
         if (!participantId) {
             throw Error("Invalid participant JWT.");
         }
 
-        const response = await ParticipantService.saveAutobiography(
+        const saved = await ParticipantService.saveAutobiography({
             sampleId,
             participantId,
             autobiographyVideo,
-            autobiographyText
-        );
+            autobiographyText,
+            submitForm,
+        });
 
-        if (!response) {
-            throw Error("Cannot submit this autobiography.");
+        if (!saved) {
+            throw Error("Cannot save this autobiography.");
         }
 
-        res.status(200).json(response);
+        res.status(200).json(true);
+    } catch (e: any) {
+        console.log(e);
+
+        // TO DO errors handlers
+        res.status(409).send(e.message);
+    }
+}
+
+export async function handlerGetParticipantInfo(req: Request<GetInfoDTO["params"], {}, {}, {}>, res: Response) {
+    try {
+        const { sampleId } = req.params;
+
+        const participantId = res.locals.participantId;
+        if (!participantId) {
+            throw Error("Invalid participant JWT.");
+        }
+
+        const participantData = await ParticipantService.getParticipantDataById({
+            sampleId,
+            participantId,
+        });
+
+        console.log(participantData);
+
+        res.status(200).json(participantData);
     } catch (e: any) {
         console.log(e);
 

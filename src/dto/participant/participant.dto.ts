@@ -33,8 +33,8 @@ const partcipantDataBody = object({
         ),
     }),
     familyData: object({
-        qttChildrens: optional(number()),
-        qttSiblings: optional(number()),
+        qttChildrens: optional(number().or(string().transform((str, ctx) => Number(str)))),
+        qttSiblings: optional(number().or(string().transform((str, ctx) => Number(str)))),
         qttFamilyMembers: optional(string()),
         familyMonthIncome: optional(z.enum(INCOME_LEVELS_ARRAY)),
         houseDevices: optional(array(z.enum(DEVICES_ARRAY))),
@@ -50,7 +50,7 @@ const partcipantDataBody = object({
 
 const participantDataParams = object({
     sampleId: string(),
-    participantId: string(),
+    participantId: string().optional(),
 });
 
 export const participantDataSchema = object({
