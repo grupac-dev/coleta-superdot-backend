@@ -92,8 +92,10 @@ export const dispatchSecondSourceIndicationEmail = (body: IEmailSecondSourceINdi
 
 interface IEmailParticipantVerification {
     participantName?: string;
-    verificationCode: number;
+    verificationCode: string;
     participantEmail: string;
+    sampleId: string;
+    participantId: string;
 }
 
 export const dispatchParticipantVerificationEmail = (body: IEmailParticipantVerification) => {
@@ -102,11 +104,11 @@ export const dispatchParticipantVerificationEmail = (body: IEmailParticipantVeri
             template: "verifyParticipant",
             message: {
                 to: body.participantEmail,
-                subject: "SuperDot - Seu código de verificação.",
+                subject: "SuperDot - Seu link de verificação.",
             },
             locals: {
                 participantName: body.participantName,
-                verificationCode: body.verificationCode,
+                verificationUrl: `${env.FRONT_END_URL}/formulario-adulto/${body.sampleId}/${body.participantId}/${body.verificationCode}`,
             },
         })
         .then(console.log)

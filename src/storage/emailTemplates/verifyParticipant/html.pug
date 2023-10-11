@@ -10,10 +10,15 @@ html
             else
                 h1 Olá, participante!
 
-        p Você solicitou um código para continuar o preenchimento do Questionário de Altas Habilidades ou Superdotação - Adulto.
+        p Você solicitou um link de verificação de e-mail para iniciar/continuar o preenchimento do Questionário de Altas Habilidades ou Superdotação - Adulto.
         
         p
-            b Utilize o código a seguir: #{verificationCode}
+            b Utilize o link abaixo. 
+        
+        a(href=verificationUrl target=_blank) #{verificationUrl}
+        
+        br
+        br
 
-        footer Caso não tenha solicitado o código, desconsidere essa mensagem.
+        footer Caso não tenha solicitado, desconsidere essa mensagem.
         footer Essa mensagem é automática e não deve ser respondida.
