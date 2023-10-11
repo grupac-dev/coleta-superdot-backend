@@ -1,55 +1,69 @@
 import express from "express";
 import { validateDTO } from "../middleware/validateDTO.middleware";
 import * as ParticipantController from "../controller/participant.controller";
-import {
-    participantAcceptAllSampleDocsDTO,
-    participantDataDTO,
-    participantIndicateSecondSourcesDTO,
-    participantSubmitAutobiographyDTO,
-    validateEmailInSampleDTO,
-    validateVerificationCodeDTO,
-} from "../dto/participant.dto";
-import { requireParticipantJWT } from "../middleware/requireParticipantJWT";
+import { requireParticipantJWT } from "../middleware/requireParticipantJWT.middleware";
+import { sendValidationEmailSchema } from "../dto/participant/sendValidationEmail.dto";
+import { verifyValidationCodeSchema } from "../dto/participant/verifyValidationCode.dto";
+import { participantDataSchema } from "../dto/participant/participant.dto";
+import { acceptAllSampleDocsSchema } from "../dto/participant/acceptDocs.dto";
+import { saveAutobiographySchema } from "../dto/participant/saveAutobiography.dto";
+import { saveSecondSourcesSchema } from "../dto/participant/saveSecondSources.dto";
+import { getInfoSchema } from "../dto/participant/getInfo.dto";
 
 const participantRouter = express.Router();
 
 participantRouter.post(
-    "/verifyParticipantEmail/sample/:sampleId",
-    validateDTO(validateEmailInSampleDTO),
+    "/send-verification-code/sample/:sampleId",
+    validateDTO(sendValidationEmailSchema),
     ParticipantController.handlerValidateEmailInSample
 );
 
 participantRouter.patch(
-    "/validateVerificationCode/sample/:sampleId",
-    validateDTO(validateVerificationCodeDTO),
+    "/validate-verification-code/sample/:sampleId/participant/:participantId/code/:verificationCode",
+    validateDTO(verifyValidationCodeSchema),
     ParticipantController.handlerValidateVerificationCode
 );
 
-participantRouter.post(
-    "/submitParticipantData/sample/:sampleId",
-    validateDTO(participantDataDTO),
+participantRouter.get(
+    "/get-participant-info/sample/:sampleId",
+    validateDTO(getInfoSchema),
+    requireParticipantJWT,
+    ParticipantController.handlerGetParticipantInfo
+);
+
+participantRouter.put(
+    "/save-participant-data/sample/:sampleId",
+    validateDTO(participantDataSchema),
+    requireParticipantJWT,
+    ParticipantController.handlerSaveParticipantData
+);
+
+participantRouter.put(
+    "/submit-participant-data/sample/:sampleId",
+    validateDTO(participantDataSchema),
+    requireParticipantJWT,
     ParticipantController.handlerSubmitParticipantData
 );
 
 participantRouter.patch(
-    "/acceptAllSampleDocs/sample/:sampleId",
-    validateDTO(participantAcceptAllSampleDocsDTO),
+    "/accept-all-sample-docs/sample/:sampleId",
+    validateDTO(acceptAllSampleDocsSchema),
     requireParticipantJWT,
     ParticipantController.handlerAcceptAllSampleDocs
 );
 
-participantRouter.post(
-    "/indicateSecondSources/sample/:sampleId",
-    validateDTO(participantIndicateSecondSourcesDTO),
+participantRouter.patch(
+    "/save-second-sources/sample/:sampleId",
+    validateDTO(saveSecondSourcesSchema),
     requireParticipantJWT,
-    ParticipantController.handlerIndicateSecondSources
+    ParticipantController.handlerSaveSecondSources
 );
 
 participantRouter.patch(
-    "/submitAutobiography/sample/:sampleId",
-    validateDTO(participantSubmitAutobiographyDTO),
+    "/save-autobiography/sample/:sampleId",
+    validateDTO(saveAutobiographySchema),
     requireParticipantJWT,
-    ParticipantController.handlerSubmitAutobiography
+    ParticipantController.handlerSaveAutobiography
 );
 
 export { participantRouter };
