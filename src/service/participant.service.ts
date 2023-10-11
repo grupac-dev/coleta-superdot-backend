@@ -1,303 +1,305 @@
 import mongoose from "mongoose";
 import ResearcherModel from "../model/researcher.model";
-import ParticipantSessionModel from "../model/participantSession.model";
 import * as EmailUtils from "../util/emailSender.util";
 import { DateTime } from "luxon";
-import { EAdultFormSteps, SESSION_VALID_TIME_IN_MILISECONDS } from "../util/consts";
-import { signJwt } from "../util/jwt";
-import env from "../util/validateEnv";
+import { VERIFICATION_CODE_VALID_TIME_IN_MILISECONDS } from "../util/consts";
 import { IParticipant } from "../interface/participant.interface";
 import { ISecondSource } from "../interface/secondSource.interface";
-import { EmailAlreadyRegisteredError, ObjectNotExists } from "../error/participant.error";
+import { PartialDeep } from "type-fest";
+import { getSampleById } from "./sample.service";
+import crypto from "crypto";
+import { ParticipantModel } from "../model/schemas/participant.schema";
+import { issueParticipantAccessToken } from "./auth.service";
+import ISample from "../interface/sample.interface";
+import { omit, update } from "lodash";
+import { finishForm } from "./adultForm.service";
+import { FormAlreadyFinished } from "../error/participant.error";
 
-const TO_GET_SIX_DIGITS_CODE = 1000000;
+interface FindParticipantByEmailParams {
+    sample: ISample;
+    participantEmail: string;
+}
 
-export async function validateEmail(participantEmail: string, sampleId: string) {
-    const { participant } = await getParticipantByEmail(participantEmail, sampleId);
+export function findParticipantByEmail({ sample, participantEmail }: FindParticipantByEmailParams) {
+    const participant = sample.participants?.find(
+        (participant) => participant?.personalData?.email === participantEmail
+    );
 
-    const validationCode = Math.round(Math.random() * TO_GET_SIX_DIGITS_CODE);
+    return participant;
+}
 
-    // Destroy all participant sessions
-    await ParticipantSessionModel.updateMany({ participantEmail }, { validSession: false });
+interface FindParticipantByIdParams {
+    sample: ISample;
+    participantId: string;
+}
 
-    await ParticipantSessionModel.create({
-        participantEmail,
-        validationCode,
-        validSession: true,
-    });
+export function findParticipantById({ sample, participantId }: FindParticipantByIdParams) {
+    if (!mongoose.Types.ObjectId.isValid(participantId)) {
+        throw new Error("Participant id is invalid!");
+    }
+
+    const participant = sample.participants?.find((participant) => participant?._id?.toString() === participantId);
+
+    if (!participant) {
+        throw new Error("Participant not found");
+    }
+
+    return participant;
+}
+
+interface SendEmailVerificationParams {
+    participantEmail: string;
+    sampleId: string;
+}
+
+export async function sendEmailVerification({ participantEmail, sampleId }: SendEmailVerificationParams) {
+    const verificationCode = crypto.randomBytes(128).toString("hex");
+
+    const { researcherDoc, sample } = await getSampleById({ sampleId });
+    let participant = findParticipantByEmail({ sample, participantEmail });
+
+    if (participant?.adultForm?.endFillFormAt) {
+        throw new FormAlreadyFinished("The form was already finished by the participant.");
+    }
+
+    if (participant) {
+        participant.verification = {
+            code: verificationCode,
+            generatedAt: new Date(),
+        };
+    } else {
+        // New participant
+        participant = {
+            personalData: { email: participantEmail },
+            verification: {
+                code: verificationCode,
+                generatedAt: new Date(),
+            },
+        };
+
+        let arrLen = sample.participants?.push(participant);
+        if (sample.participants && arrLen) {
+            participant = sample.participants[arrLen - 1]; // Get participant id
+        }
+    }
+
+    if (!participant._id) {
+        throw new Error("Cannot send the verification email.");
+    }
+
+    await researcherDoc.save();
 
     EmailUtils.dispatchParticipantVerificationEmail({
-        participantName: participant?.personalData.fullName,
+        participantName: participant.personalData?.fullName,
         participantEmail,
-        verificationCode: validationCode,
+        verificationCode,
+        participantId: participant._id,
+        sampleId,
     });
 
     return true;
 }
 
-interface CodeValidated {
-    participantToken: string;
-    adultFormStepToReturn?: number;
+interface ValidateEmailVerificationParams {
+    participantId: string;
+    sampleId: string;
+    code: string;
 }
 
-export async function validateVerificationCode(
-    participantEmail: string,
-    sampleId: string,
-    code: number
-): Promise<CodeValidated> {
-    const session = await ParticipantSessionModel.findOne(
-        { participantEmail, validSession: true },
-        { validationCode: 1, createdAt: 1 }
-    );
+export async function validateEmailVerificationCode({
+    participantId,
+    sampleId,
+    code,
+}: ValidateEmailVerificationParams) {
+    const { researcherDoc, sample } = await getSampleById({ sampleId });
+    const participant = findParticipantById({ sample, participantId });
 
-    if (!session) {
-        throw Error("This participant haven't a active session.");
+    if (!participant?._id) {
+        throw Error("Participant email not found.");
     }
 
-    if (session.validationCode !== code) {
-        throw Error("Invalid validation code.");
+    if (!participant.verification || !participant.verification.code || !participant.verification.generatedAt) {
+        throw Error("Verification code not requested!");
     }
 
-    if (!session.createdAt) {
-        throw Error("Invalid participant session.");
+    if (participant.verification.code !== code) {
+        throw Error("Invalid verification code!");
     }
 
-    const sessionCreatedAtInMs = DateTime.fromISO(session.createdAt).toMillis();
+    const codeGeneratedAtInMs = DateTime.fromJSDate(participant.verification.generatedAt).toMillis();
     const currentDateInMs = DateTime.now().toMillis();
 
-    if (currentDateInMs - sessionCreatedAtInMs > SESSION_VALID_TIME_IN_MILISECONDS) {
+    if (currentDateInMs - codeGeneratedAtInMs > VERIFICATION_CODE_VALID_TIME_IN_MILISECONDS) {
         throw Error("Verification code expired!");
     }
 
-    const { participant } = await getParticipantByEmail(participantEmail, sampleId);
-    const participantId = participant?._id;
-
     return {
-        participantToken: issueParticipantToken(participantEmail, participantId),
-        adultFormStepToReturn: participant?.adultFormCurrentStep,
+        token: issueParticipantAccessToken({ participantId: participant._id }),
+        participant,
+        researcherName: researcherDoc.personalData.fullName,
     };
 }
 
-export function issueParticipantToken(participantEmail: string, participantId?: string) {
-    return signJwt(
+interface SaveParticipantDataParams {
+    sampleId: string;
+    participantId: string;
+    participantData: PartialDeep<IParticipant>;
+}
+
+export async function saveParticipantData({ sampleId, participantId, participantData }: SaveParticipantDataParams) {
+    let { sample } = await getSampleById({ sampleId });
+    const participant = findParticipantById({ participantId, sample });
+    if (participant.personalData?.email) {
+        participantData = {
+            ...participantData,
+            personalData: {
+                ...participantData.personalData,
+                email: participant.personalData.email,
+            },
+        };
+    }
+
+    await ResearcherModel.findOneAndUpdate(
+        { "researchSamples._id": sampleId, "researchSamples.participants._id": participantId },
         {
-            participantId,
-            participantEmail,
+            $set: {
+                "researchSamples.$[sam].participants.$[part].personalData": participantData.personalData,
+                "researchSamples.$[sam].participants.$[part].familyData": participantData.familyData,
+                "researchSamples.$[sam].participants.$[part].addressData": participantData.addressData,
+                "researchSamples.$[sam].participants.$[part].adultForm.startFillFormAt": new Date(),
+            },
         },
-        "ACCESS_TOKEN_PRIVATE_KEY",
         {
-            expiresIn: env.PARTICIPANT_TOKEN_TTL,
+            arrayFilters: [{ "sam._id": sampleId }, { "part._id": participantId }],
+            new: true,
         }
     );
+
+    return true;
 }
 
-export async function getParticipantByEmail(email: string, sampleId: string) {
-    if (!mongoose.Types.ObjectId.isValid(sampleId)) {
-        throw new Error("Sample id is invalid.");
-    }
-
-    const researcherDoc = await ResearcherModel.findOne({ "researchSamples._id": sampleId });
-
-    if (!researcherDoc || !researcherDoc.researchSamples) {
-        throw new Error("Sample not found.");
-    }
-
-    const sample = researcherDoc.researchSamples.find((sample) => sample._id?.toString() === sampleId);
-
-    if (!sample) {
-        throw new Error("Sample not found.");
-    }
-
-    const participantWithSameEmail = sample.participants?.find(
-        (participant) => participant.personalData.email === email
-    );
-
-    return { researcherDoc, participant: participantWithSameEmail };
+interface SubmitParticipantDataParams {
+    sampleId: string;
+    participantId: string;
+    participantData: PartialDeep<IParticipant>;
 }
 
-export async function saveParticipantData(sampleId: string, participantData: IParticipant): Promise<string> {
-    if (!mongoose.Types.ObjectId.isValid(sampleId)) {
-        throw new Error("Sample id is invalid.");
+export async function submitParticipantData({ sampleId, participantId, participantData }: SubmitParticipantDataParams) {
+    try {
+        ParticipantModel.validate(participantData);
+    } catch (e) {
+        console.error(e);
+        throw new Error("Participant data is invalid!");
     }
 
-    const researcherDoc = await ResearcherModel.findOne({ "researchSamples._id": sampleId });
+    await saveParticipantData({ sampleId, participantId, participantData });
 
-    if (!researcherDoc || !researcherDoc.researchSamples) {
-        throw new Error("Sample not found.");
-    }
-
-    const sample = researcherDoc.researchSamples.find((sample) => sample._id?.toString() === sampleId);
-
-    if (!sample) {
-        throw new Error("Sample not found.");
-    }
-
-    const participantWithSameEmail = sample.participants?.find(
-        (participant) => participant.personalData.email === participantData.personalData.email
-    );
-
-    if (participantWithSameEmail) {
-        throw new EmailAlreadyRegisteredError("Email already registered.");
-    }
-
-    // First step finished. Set the next step
-    participantData.adultFormCurrentStep = EAdultFormSteps.READ_AND_ACCEPT_DOCS;
-
-    sample.participants?.push(participantData);
-
-    await researcherDoc.save();
-
-    const participantCreated = sample.participants?.find(
-        (participant) => participant.personalData.email === participantData.personalData.email
-    );
-
-    if (!participantCreated || !participantCreated._id) {
-        throw new Error("The participant participant object was not created.");
-    }
-
-    return issueParticipantToken(participantCreated.personalData.email, participantCreated?._id);
+    return true;
 }
 
-export async function acceptAllSampleDocs(sampleId: string, participantId: string) {
-    if (!mongoose.Types.ObjectId.isValid(sampleId)) {
-        throw new Error("Sample id is invalid.");
-    }
+interface AcceptAllSampleDocs {
+    sampleId: string;
+    participantId: string;
+}
 
-    if (!mongoose.Types.ObjectId.isValid(participantId)) {
-        throw new Error("Participant id is invalid.");
-    }
-
-    const researcherDoc = await ResearcherModel.findOne({ "researchSamples._id": sampleId });
-
-    if (!researcherDoc || !researcherDoc.researchSamples) {
-        throw new Error("Sample not found.");
-    }
-
-    const sample = researcherDoc.researchSamples.find((sample) => sample._id?.toString() === sampleId);
-
-    if (!sample) {
-        throw new Error("Sample not found.");
-    }
-
-    const participant = sample.participants?.find((participant) => participant._id?.toString() === participantId);
-
-    if (!participant) {
-        throw new Error("Participant not found.");
-    }
+export async function acceptAllSampleDocs({ sampleId, participantId }: AcceptAllSampleDocs) {
+    const { researcherDoc, sample } = await getSampleById({ sampleId });
+    const participant = findParticipantById({ sample, participantId });
 
     if (sample.researchCep.taleDocument) {
-        participant.acceptTaleIn = new Date();
+        participant.acceptTaleAt = new Date();
     }
 
     if (sample.researchCep.tcleDocument) {
-        participant.acceptTcleIn = new Date();
+        participant.acceptTcleAt = new Date();
     }
-
-    // Second step finished. Set the next step
-    participant.adultFormCurrentStep = EAdultFormSteps.INDICATE_SECOND_SOURCE;
 
     await researcherDoc.save();
 
     return true;
 }
 
-export async function saveSecondSources(sampleId: string, participantId: string, secondSources: ISecondSource[]) {
-    if (!mongoose.Types.ObjectId.isValid(sampleId)) {
-        throw new Error("Sample id is invalid.");
-    }
+interface SaveSecondSourcesParams {
+    sampleId: string;
+    participantId: string;
+    secondSources: ISecondSource[];
+}
 
-    const researcherDoc = await ResearcherModel.findOne({ "researchSamples._id": sampleId });
+export async function saveSecondSources({ sampleId, participantId, secondSources }: SaveSecondSourcesParams) {
+    const secondSourcesIndicated = secondSources.map((secondSource) => {
+        return {
+            ...secondSource,
+            indicated: true,
+        };
+    });
 
-    if (!researcherDoc || !researcherDoc.researchSamples) {
-        throw new Error("Sample not found.");
-    }
-
-    const sample = researcherDoc.researchSamples.find((sample) => sample._id?.toString() === sampleId);
-
-    if (!sample) {
-        throw new Error("Sample not found.");
-    }
-
-    const participant = sample.participants?.find((participant) => participant._id?.toString() === participantId);
-
-    if (!participant) {
-        throw new Error("Participant not found.");
-    }
-
-    secondSources.forEach((secondSource) => {
-        const secondSourceWithSameEmail = participant.secondSources?.find(
-            (secondSourceRegistered) => secondSourceRegistered.personalData.email === secondSource.personalData.email
-        );
-
-        if (secondSourceWithSameEmail) {
-            throw new Error("Email already registered to other second source.");
+    await ResearcherModel.findOneAndUpdate(
+        { "researchSamples._id": sampleId, "researchSamples.participants._id": participantId },
+        {
+            $set: {
+                "researchSamples.$[sam].participants.$[part].secondSources": secondSourcesIndicated,
+            },
+        },
+        {
+            arrayFilters: [{ "sam._id": sampleId }, { "part._id": participantId }],
         }
-
-        participant?.secondSources?.push({ ...secondSource, indicated: true });
-    });
-
-    // Second step finished. Set the next step
-    participant.adultFormCurrentStep = EAdultFormSteps.GENERAL_CHARACTERISTICS;
-
-    await researcherDoc.save();
-
-    /** SEDING EMAIL */
-    secondSources.forEach((secondSource) => {
-        EmailUtils.dispatchSecondSourceIndicationEmail({
-            participantName: participant.personalData.fullName,
-            participantEmail: participant.personalData.email,
-            secondSourceName: secondSource.personalData.fullName,
-            secondSourceEmail: secondSource.personalData.email,
-            participantId: participantId,
-            sampleId: sampleId,
-        });
-    });
+    );
 
     return true;
 }
-export async function saveAutobiography(
-    sampleId: string,
-    participantId: string,
-    autobiographyVideo?: string,
-    autobiographyText?: string
-) {
-    if (!mongoose.Types.ObjectId.isValid(sampleId)) {
-        throw new Error("Sample id is invalid.");
-    }
 
-    const researcherDoc = await ResearcherModel.findOne({ "researchSamples._id": sampleId });
+interface AutobiographyParams {
+    sampleId: string;
+    participantId: string;
+    autobiographyVideo?: string;
+    autobiographyText?: string;
+    submitForm?: boolean;
+}
 
-    if (!researcherDoc || !researcherDoc.researchSamples) {
-        throw new Error("Sample not found.");
-    }
-
-    const sample = researcherDoc.researchSamples.find((sample) => sample._id?.toString() === sampleId);
-
-    if (!sample) {
-        throw new Error("Sample not found.");
-    }
-
-    const participant = sample.participants?.find((participant) => participant._id?.toString() === participantId);
-
-    if (!participant) {
-        throw new Error("Participant not found.");
-    }
-
+export async function saveAutobiography({
+    sampleId,
+    participantId,
+    autobiographyVideo,
+    autobiographyText,
+    submitForm,
+}: AutobiographyParams) {
     if (!autobiographyText?.length && !autobiographyVideo?.length) {
         throw new Error("Autobiography text or video is required!");
     }
+
+    const { researcherDoc, sample } = await getSampleById({ sampleId });
+    const participant = findParticipantById({ sample, participantId });
 
     participant.autobiography = {
         text: autobiographyText,
         videoUrl: autobiographyVideo,
     };
 
-    // Set the next step
-    participant.adultFormCurrentStep = EAdultFormSteps.FINISHED;
-
-    participant.endFillFormDate = new Date();
-
     await researcherDoc.save();
 
+    if (submitForm) {
+        if (!participant.secondSources) {
+            throw new Error("The participant don't indicate second sources.");
+        }
+
+        await finishForm({
+            participantId,
+            sampleId,
+            secondSourcesToDispatchEmails: participant.secondSources,
+        });
+    }
+
     return true;
+}
+
+interface GetParticipantDataByIdParams {
+    sampleId: string;
+    participantId: string;
+}
+
+export async function getParticipantDataById({ sampleId, participantId }: GetParticipantDataByIdParams) {
+    const { sample } = await getSampleById({ sampleId });
+    const participant = findParticipantById({ sample, participantId });
+
+    return omit(participant, "verification");
 }
