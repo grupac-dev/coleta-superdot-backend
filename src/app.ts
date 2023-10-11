@@ -1,5 +1,5 @@
 import express, { NextFunction, Request, Response } from "express";
-import { deserializeSession } from "./middleware/deserializeSession.middleware";
+import { deserializeResearcherJWT } from "./middleware/deserializeResearcherJWT.middleware";
 import createHttpError, { isHttpError } from "http-errors";
 import { researcherRouter } from "./route/reseacher.route";
 import cors from "cors";
@@ -9,7 +9,7 @@ import { sampleGroupRouter } from "./route/sampleGroup.route";
 import { sampleRouter } from "./route/sample.route";
 import { sampleReviewRouter } from "./route/sampleReview.route";
 import { adultFormRoute } from "./route/adultForm.route";
-import { deserializeParticipantJWT } from "./middleware/deserializeParticipantJWT";
+import { deserializeParticipantJWT } from "./middleware/deserializeParticipantJWT.middleware";
 import { participantRouter } from "./route/participant.route";
 import { secondSourceRouter } from "./route/secondSource.route";
 
@@ -21,7 +21,7 @@ app.use(cors());
 
 app.use(morgan("dev"));
 
-app.use(deserializeSession);
+app.use(deserializeResearcherJWT);
 app.use(deserializeParticipantJWT);
 
 app.use("/api/auth", authRouter);
