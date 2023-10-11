@@ -5,6 +5,7 @@ import { paginateResearcherDTO, updateResearcherDTO } from "../dto/researcher.dt
 import { requireResearcherJWT } from "../middleware/requireResearcherJWT.middleware";
 import { requireRole } from "../middleware/requireRole.middleware";
 import { getResearcherNameBySampleIdSchema } from "../dto/researcher/getResearcherNameBySampleId.dto";
+import { getResearchDataBySampleIdAndParticipantIdSchema } from "../dto/researcher/getResearchDataBySampleIdAndParticipantId.dto";
 
 const researcherRouter = express.Router();
 
@@ -24,6 +25,12 @@ researcherRouter.get(
     "/get-researcher-name-by-sample/:sampleId",
     validateDTO(getResearcherNameBySampleIdSchema),
     ResearcherController.handlerGetReseacherNameBySampleId
+);
+
+researcherRouter.get(
+    "/get-research-data-by/sample/:sampleId/participant/:participantId",
+    validateDTO(getResearchDataBySampleIdAndParticipantIdSchema),
+    ResearcherController.handlerGetReseachDataBySampleIdAndParticipantId
 );
 
 export { researcherRouter };
