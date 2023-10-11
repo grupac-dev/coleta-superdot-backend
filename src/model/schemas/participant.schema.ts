@@ -1,4 +1,4 @@
-import { Schema } from "mongoose";
+import mongoose, { Schema, model } from "mongoose";
 import { IParticipant } from "../../interface/participant.interface";
 import {
     DEVICES_ARRAY,
@@ -102,34 +102,31 @@ export const participantSchema = new Schema<IParticipant>(
                 required: [true, "Participant houseNumber is required!"],
             },
         },
-        acceptTaleIn: Date,
-        acceptTcleIn: Date,
-        secondSources: [secondSourceSchema],
-        adultFormAnswers: [
-            {
-                groupName: {
-                    type: String,
-                    required: [true, "Group name is required!"],
+        acceptTaleAt: Date,
+        acceptTcleAt: Date,
+        adultForm: {
+            endFillFormAt: Date,
+            startFillFormAt: Date,
+            answersByGroup: [
+                {
+                    groupName: String,
+                    sequence: {
+                        type: Number,
+                        enum: EAdultFormGroup,
+                    },
+                    questions: [questionSchema],
                 },
-                sequence: {
-                    type: Number,
-                    enum: EAdultFormGroup,
-                    required: [true, "Group sequence is required!"],
-                },
-                questions: [questionSchema],
-            },
-        ],
-        endFillFormDate: Date,
-        adultFormCurrentStep: {
-            type: Number,
-            enum: EAdultFormSteps,
+            ],
         },
         autobiography: {
             text: String,
             videoUrl: String,
         },
+        secondSources: [secondSourceSchema],
     },
     {
         timestamps: true,
     }
 );
+
+export const ParticipantModel = model<IParticipant>("Participant", participantSchema);

@@ -1,12 +1,13 @@
+import { PartialDeep } from "type-fest";
 import {
     DeviceType,
-    EAdultFormSteps,
+    EAdultFormGroup,
     EducationLevelType,
     GenderType,
     IncomeLevelType,
     MaritalStatusType,
 } from "../util/consts";
-import IQuestionsGroup from "./adultForm/questionsGroup.interface";
+import IQuestion from "./adultForm/question.interface";
 import { ISecondSource } from "./secondSource.interface";
 
 export interface IParticipant {
@@ -36,17 +37,23 @@ export interface IParticipant {
         street: string;
         houseNumber: string;
     };
-    acceptTcleIn?: Date;
-    acceptTaleIn?: Date;
-    secondSources?: ISecondSource[];
-    adultFormAnswers?: IQuestionsGroup[];
-    adultFormCurrentStep?: EAdultFormSteps;
+    verification?: {
+        code: string;
+        generatedAt: Date;
+    };
+    acceptTcleAt?: Date;
+    acceptTaleAt?: Date;
+    giftdnessIndicators?: boolean;
+    adultForm?: {
+        endFillFormAt?: Date;
+        startFillFormAt?: Date;
+        answersByGroup?: { groupName: string; sequence: EAdultFormGroup; questions: IQuestion[] }[];
+    };
     autobiography?: {
         text?: string;
         videoUrl?: string;
     };
-    endFillFormDate?: Date;
-    giftdnessIndicators?: boolean;
+    secondSources?: ISecondSource[];
     createdAt?: Date;
     updatedAt?: Date;
 }
