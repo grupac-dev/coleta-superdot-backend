@@ -2,15 +2,17 @@ import { EQuestionType } from "../../util/consts";
 
 export default interface IQuestion {
     _id?: string;
-    sequence: number;
     statement: string;
     questionType: EQuestionType;
     options?: {
         value: string;
         points?: number;
     }[];
-    notRequired?: boolean;
-    constantPunctuation?: number;
-    answer?: string | string[]; // Participant answer
+    required?: boolean;
+    parentQuestion?: {
+        parentId: string;
+        isRequiredOnParentValue: string;
+    };
+    answer?: string | (string | undefined)[]; // The undefined is because the user can save the answer before submit
     answerPoints?: number;
 }
