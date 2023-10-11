@@ -1,10 +1,11 @@
 import { Request, Response } from "express";
 import * as AdultFormService from "../service/adultForm.service";
-import { AdultFormAllQuestionsByGroupDTO, AdultFormSubmitQuestionsByGroupDTO } from "../dto/adultForm.dto";
 import IQuestionsGroup from "../interface/adultForm/questionsGroup.interface";
+import { GetQuestionsByGroupDTO } from "../dto/adultForm/getQuestionsByGroup.dto";
+import { SaveQuestionsByGroupDTO } from "../dto/adultForm/saveQuestionsByGroup.dto";
 
 export async function handlerGetQuestionsByGroup(
-    req: Request<AdultFormAllQuestionsByGroupDTO["params"], {}, {}, {}>,
+    req: Request<GetQuestionsByGroupDTO["params"], {}, {}, {}>,
     res: Response
 ) {
     try {
@@ -30,28 +31,21 @@ export async function handlerGetQuestionsByGroup(
     }
 }
 
-export async function handlerSubmitQuestionsByGroup(
-    req: Request<AdultFormSubmitQuestionsByGroupDTO["params"], {}, AdultFormSubmitQuestionsByGroupDTO["body"], {}>,
+export async function handlerSaveQuestionsByGroup(
+    req: Request<SaveQuestionsByGroupDTO["params"], {}, SaveQuestionsByGroupDTO["body"], {}>,
     res: Response
 ) {
     try {
-        let { sampleId, participantId } = req.params;
+        let { sampleId } = req.params;
 
-        let secondSourceId;
-
-        if (!participantId) {
-            participantId = res.locals.participantId; // Participant ID in JWT Token
-        } else {
-            secondSourceId = res.locals.participantId; // Second Source ID in JWT Token
-        }
+        const participantId = res.locals.participantId; // Participant ID in JWT Token
 
         const groupQuestionsWithAnswers: IQuestionsGroup = req.body;
 
-        const response = await AdultFormService.submitGroupQuestions(
+        const response = await AdultFormService.saveGroupQuestions(
             sampleId,
             participantId as string,
-            groupQuestionsWithAnswers,
-            secondSourceId
+            groupQuestionsWithAnswers
         );
 
         if (!response) {
