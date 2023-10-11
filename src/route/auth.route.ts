@@ -16,8 +16,6 @@ authRouter.post(
 
 authRouter.post("/login", [validateDTO(loginDTO)], AuthController.loginHandler);
 
-authRouter.get("/isValidSession", AuthController.isValidSession);
-
 authRouter.get(
     "/userRole/:userId",
     [validateDTO(userRoleDTO), requireRole("Administrador")],
