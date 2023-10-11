@@ -1,30 +1,24 @@
 import express from "express";
 import { validateDTO } from "../middleware/validateDTO.middleware";
-import { adultFormAllQuestionsByGroupDTO, adultFormSubmitQuestionsByGroupDTO } from "../dto/adultForm.dto";
 import * as AdultFormController from "../controller/adultForm.controller";
-import { requireParticipantJWT } from "../middleware/requireParticipantJWT";
+import { requireParticipantJWT } from "../middleware/requireParticipantJWT.middleware";
+import { getQuestionsByGroupSchema } from "../dto/adultForm/getQuestionsByGroup.dto";
+import { saveQuestionsByGroupSchema } from "../dto/adultForm/saveQuestionsByGroup.dto";
 
 const adultFormRoute = express.Router();
 
 adultFormRoute.get(
-    "/allQuestionsByGroup/:groupSequence/source/:formSource",
-    validateDTO(adultFormAllQuestionsByGroupDTO),
+    "/questions-by-group/:groupSequence/source/:formSource",
+    validateDTO(getQuestionsByGroupSchema),
     requireParticipantJWT,
     AdultFormController.handlerGetQuestionsByGroup
 );
 
 adultFormRoute.patch(
-    "/submitGroupQuestions/sample/:sampleId",
-    validateDTO(adultFormSubmitQuestionsByGroupDTO),
+    "/save-questions-by-group/sample/:sampleId",
+    validateDTO(saveQuestionsByGroupSchema),
     requireParticipantJWT,
-    AdultFormController.handlerSubmitQuestionsByGroup
-);
-
-adultFormRoute.patch(
-    "/submitGroupQuestions/sample/:sampleId/participant/:participantId",
-    validateDTO(adultFormSubmitQuestionsByGroupDTO),
-    requireParticipantJWT,
-    AdultFormController.handlerSubmitQuestionsByGroup
+    AdultFormController.handlerSaveQuestionsByGroup
 );
 
 export { adultFormRoute };
