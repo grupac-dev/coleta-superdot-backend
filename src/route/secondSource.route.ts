@@ -2,12 +2,9 @@ import express from "express";
 import { validateDTO } from "../middleware/validateDTO.middleware";
 import * as SecondSourceController from "../controller/secondSource.controller";
 import { requireParticipantJWT } from "../middleware/requireParticipantJWT.middleware";
-import {
-    secondSourceAcceptAllSampleDocsDTO,
-    secondSourceDataDTO,
-    validateSecondSourceVerificationCodeDTO,
-} from "../dto/secondSource.dto";
+import { secondSourceAcceptAllSampleDocsDTO, secondSourceDataDTO } from "../dto/secondSource.dto";
 import { sendValidationSecondSourceEmailSchema } from "../dto/secondSource/sendValidationSecondSourceEmail.dto";
+import { validateSecondSourceVerificationCodeSchema } from "../dto/secondSource/validateSecondSourceVerificationCode.dto";
 
 const secondSourceRouter = express.Router();
 
@@ -18,8 +15,8 @@ secondSourceRouter.post(
 );
 
 secondSourceRouter.patch(
-    "/validateSecondSourceVerificationCode/participant/:participantId",
-    validateDTO(validateSecondSourceVerificationCodeDTO),
+    "/validate-verification-code/sample/:sampleId/participant/:participantId/second-source/:secondSourceId/code/:verificationCode",
+    validateDTO(validateSecondSourceVerificationCodeSchema),
     SecondSourceController.handlerValidateSecondSourceVerificationCode
 );
 
