@@ -1,13 +1,13 @@
 import { Request, Response } from "express";
 import * as SecondSourceService from "../service/secondSource.service";
 import { ObjectNotExists } from "../error/participant.error";
-import { SecondSourceAcceptAllSampleDocsDTO } from "../dto/secondSource.dto";
 import { SendValidationSecondSourceEmailDTO } from "../dto/secondSource/sendValidationSecondSourceEmail.dto";
 import { ValidateSecondSourceVerificationCodeDTO } from "../dto/secondSource/validateSecondSourceVerificationCode.dto";
 import {
     SaveSecondSourcePersonalDataDTO,
     SubmitSecondSourcePersonalDataDTO,
 } from "../dto/secondSource/secondSourcePersonalData.dto";
+import { AcceptAllSampleDocsDTO } from "../dto/secondSource/acceptAllSampleDocs.dto";
 
 export async function handlerSendVerificationEmail(
     req: Request<SendValidationSecondSourceEmailDTO["params"], {}, SendValidationSecondSourceEmailDTO["body"], {}>,
@@ -110,19 +110,15 @@ export async function handlerSubmitSecondSourceData(
 }
 
 export async function handlerAcceptAllSampleDocs(
-    req: Request<SecondSourceAcceptAllSampleDocsDTO["params"], {}, {}, {}>,
+    req: Request<AcceptAllSampleDocsDTO["params"], {}, {}, {}>,
     res: Response
 ) {
     try {
-        const { sampleId, participantId } = req.params;
+        const { sampleId } = req.params;
 
-        const secondSourceId = res.locals.participantId;
+        const { secondSourceId, participantId } = res.locals;
 
-        if (!secondSourceId) {
-            throw Error("Invalid second source JWT.");
-        }
-
-        const accepted = await SecondSourceService.acceptAllSampleDocs(sampleId, participantId, secondSourceId);
+        const accepted = await SecondSourceService.acceptAllSampleDocs({ sampleId, participantId, secondSourceId });
 
         if (!accepted) {
             throw Error("Cannot accept sample docs.");
