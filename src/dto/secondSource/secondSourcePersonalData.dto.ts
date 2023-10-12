@@ -6,7 +6,6 @@ import { EDUCATION_LEVEL_ARRAY, RELATIONSHIPS_ARRAY, RELATIONSHIP_TIME_ARRAY } f
 const secondSourcePersonalDataBody = object({
     personalData: object({
         fullName: string({ required_error: "Full name is required!" }),
-        email: string({ required_error: "Email is required!" }),
         birthDate: string({
             required_error: "Birth date is required",
         }).transform((val, ctx) => {
