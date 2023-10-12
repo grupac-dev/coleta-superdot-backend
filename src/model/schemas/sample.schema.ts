@@ -186,10 +186,6 @@ export const sampleSchema = new Schema<ISample>(
                         },
                         acceptTaleIn: Date,
                         acceptTcleIn: Date,
-                        teacherSubject: String,
-                        indicated: Boolean,
-                        startFillFormDate: Date,
-                        endFillFormDate: Date,
                         adultForm: {
                             endFillFormAt: Date,
                             startFillFormAt: Date,
@@ -204,6 +200,7 @@ export const sampleSchema = new Schema<ISample>(
                                 },
                             ],
                         },
+                        teacherSubject: String,
                     },
                 ],
             },
