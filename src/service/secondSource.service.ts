@@ -246,57 +246,34 @@ export async function submitSecondSourceData({
     return true;
 }
 
-export async function acceptAllSampleDocs(sampleId: string, participantId: string, secondSourceId: string) {
-    if (!mongoose.Types.ObjectId.isValid(sampleId)) {
-        throw new Error("Sample id is invalid.");
-    }
+interface AcceptAllSampleDocsParams {
+    secondSourceId: string;
+    participantId: string;
+    sampleId: string;
+}
 
-    if (!mongoose.Types.ObjectId.isValid(participantId)) {
-        throw new Error("Participant id is invalid.");
-    }
+/**
+ * The function `acceptAllSampleDocs` updates the acceptance dates in the second source object. This
+ * function will accept all documents that the researcher load in the sample.
+ * @param {AcceptAllSampleDocsParams} params Function parameters
+ * @param {string} params.secondSourceId - Second source id that accept the docs.
+ * @param {string} params.sampleId - The ID of the sample to which the participant and second source belongs.
+ * @param {string} params.participantId - Id from the participant that owner the second source
+ * @returns a boolean value of `true`.
+ */
+export async function acceptAllSampleDocs({ secondSourceId, sampleId, participantId }: AcceptAllSampleDocsParams) {
+    const { researcherDoc, sample } = await getSampleById({ sampleId });
+    const participant = findParticipantById({ sample, participantId });
 
-    if (!mongoose.Types.ObjectId.isValid(secondSourceId)) {
-        throw new Error("Second source id is invalid.");
-    }
-
-    const researcherDoc = await ResearcherModel.findOne({
-        "researchSamples.participants.secondSources._id": secondSourceId,
-    });
-
-    if (!researcherDoc || !researcherDoc.researchSamples) {
-        throw new Error("Sample not found.");
-    }
-
-    const sample = researcherDoc.researchSamples.find((sample) => sample._id?.toString() === sampleId);
-
-    if (!sample) {
-        throw new Error("Sample not found.");
-    }
-
-    const participant = sample.participants?.find((participant) => participant._id?.toString() === participantId);
-
-    if (!participant) {
-        throw new Error("Participant not found.");
-    }
-
-    const secondSource = participant.secondSources?.find(
-        (secondSource) => secondSource._id?.toString() === secondSourceId
-    );
-
-    if (!secondSource) {
-        throw new Error("Second source not found.");
-    }
+    let secondSource = findSecondSourceById({ participant: participant as IParticipant, secondSourceId });
 
     if (sample.researchCep.taleDocument) {
-        secondSource.acceptTaleIn = new Date();
+        secondSource.acceptTaleAt = new Date();
     }
 
     if (sample.researchCep.tcleDocument) {
-        participant.acceptTcleIn = new Date();
+        secondSource.acceptTcleAt = new Date();
     }
-
-    // Second step finished. Set the next step
-    secondSource.adultFormCurrentStep = EAdultFormSteps.GENERAL_CHARACTERISTICS;
 
     await researcherDoc.save();
 
