@@ -133,12 +133,14 @@ export async function saveSecondSourceGroupQuestions({
         secondSource.adultForm.answersByGroup.push(groupWithPontuation);
     }
 
-    await researcherDoc.save();
-
     // Last group
     if (groupWithPontuation.sequence === EAdultFormGroup.ARTISTIC_ACTIVITIES) {
+        secondSource.adultForm.endFillFormAt = new Date();
+        await researcherDoc.save();
         return true;
     }
+
+    await researcherDoc.save();
 
     return getQuestionsByGroup({
         sourceForm: EAdultFormSource.SECOND_SOURCE,
