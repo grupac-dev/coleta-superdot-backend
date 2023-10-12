@@ -117,8 +117,11 @@ export const dispatchParticipantVerificationEmail = (body: IEmailParticipantVeri
 
 interface IEmailSecondSourceVerification {
     secondSourceName?: string;
-    verificationCode: number;
+    verificationCode: string;
     secondSourceEmail: string;
+    sampleId: string;
+    participantId: string;
+    secondSourceId: string;
 }
 
 export const dispatchSecondSourceVerificationEmail = (body: IEmailSecondSourceVerification) => {
@@ -127,12 +130,12 @@ export const dispatchSecondSourceVerificationEmail = (body: IEmailSecondSourceVe
             template: "verifySecondSource",
             message: {
                 to: body.secondSourceEmail,
-                subject: "SuperDot - Seu código de verificação.",
+                subject: "SuperDot - Seu link de verificação.",
             },
             locals: {
                 secondSourceName: body.secondSourceName,
                 participantName: body.secondSourceName,
-                verificationCode: body.verificationCode,
+                verificationUrl: `${env.FRONT_END_URL}/formulario-adulto-segunda-fonte/${body.sampleId}/${body.participantId}/${body.secondSourceId}/${body.verificationCode}`,
             },
         })
         .then(console.log)
