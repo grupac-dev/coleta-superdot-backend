@@ -8,33 +8,21 @@ import {
     ValidateSecondSourceVerificationCodeDTO,
 } from "../dto/secondSource.dto";
 import { ISecondSource } from "../interface/secondSource.interface";
+import { SendValidationSecondSourceEmailDTO } from "../dto/secondSource/sendValidationSecondSourceEmail.dto";
 
-export async function handlerValidateEmailInParticipantSecondSources(
-    req: Request<
-        ValidateEmailInParticipantSecondSourcesDTO["params"],
-        {},
-        ValidateEmailInParticipantSecondSourcesDTO["body"],
-        {}
-    >,
+export async function handlerSendVerificationEmail(
+    req: Request<SendValidationSecondSourceEmailDTO["params"], {}, SendValidationSecondSourceEmailDTO["body"], {}>,
     res: Response
 ) {
     try {
         const { secondSourceEmail } = req.body;
-        const { participantId } = req.params;
+        const { participantId, sampleId } = req.params;
 
-        const valid = await SecondSourceService.validateEmail(secondSourceEmail, participantId);
+        const valid = await SecondSourceService.sendEmailVerification({ secondSourceEmail, participantId, sampleId });
 
-        res.status(200).json(valid);
+        res.status(201).json(valid);
     } catch (e: any) {
         console.log(e);
-
-        if (e instanceof EmailAlreadyRegisteredError) {
-            return res.status(409).send(e.message);
-        }
-
-        if (e instanceof ObjectNotExists) {
-            return res.status(404).send(e.message);
-        }
 
         // TO DO errors handlers
         res.status(500).send(e.message);
