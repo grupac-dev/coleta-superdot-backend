@@ -9,40 +9,25 @@ import crypto from "crypto";
 import { getSampleById } from "./sample.service";
 import { IParticipant } from "../interface/participant.interface";
 import { findParticipantById } from "./participant.service";
+import { issueSecondSourceAccessToken } from "./auth.service";
 
-interface SecondSourceByEmail {
-    sampleId: string;
-    participantId: string;
-    data: ISecondSource;
+interface FindSecondSourceByIdParams {
+    participant: IParticipant;
+    secondSourceId: string;
 }
 
-export async function getSecondSourceByEmailAndParticipantId(email: string, participantId: string) {
-    const secondSource = await ResearcherModel.aggregate<SecondSourceByEmail>()
-        .match({
-            "researchSamples.participants.secondSources.personalData.email": email,
-            "researchSamples.participants._id": new mongoose.Types.ObjectId(participantId),
-        })
-        .unwind("$researchSamples")
-        .unwind("$researchSamples.participants")
-        .unwind("$researchSamples.participants.secondSources")
-        .match({
-            "researchSamples.participants.secondSources.personalData.email": email,
-            "researchSamples.participants._id": new mongoose.Types.ObjectId(participantId),
-        })
-        .project({
-            _id: false,
-            sampleId: "$researchSamples._id",
-            participantId: "$researchSamples.participants._id",
-            data: "$researchSamples.participants.secondSources",
-        });
-
-    if (secondSource.length > 1) {
-        throw new Error("Second sources with email duplication.");
-    } else if (secondSource.length === 0) {
-        return undefined;
+export function findSecondSourceById({ participant, secondSourceId }: FindSecondSourceByIdParams) {
+    if (!mongoose.Types.ObjectId.isValid(secondSourceId)) {
+        throw new Error("Participant id is invalid!");
     }
 
-    return secondSource[0];
+    const secondSource = participant.secondSources?.find((sSource) => sSource?._id?.toString() === secondSourceId);
+
+    if (!secondSource) {
+        throw new Error("Participant not found");
+    }
+
+    return secondSource;
 }
 
 interface FindSecondSourceByEmailParams {
@@ -121,45 +106,46 @@ export async function sendEmailVerification({
     return true;
 }
 
-interface CodeValidated {
-    participantToken: string;
-    adultFormStepToReturn?: number;
+interface ValidateEmailVerificationParams {
+    secondSourceId: string;
+    participantId: string;
+    sampleId: string;
+    code: string;
 }
 
-export async function validateVerificationCode(
-    secondSourceEmail: string,
-    participantId: string,
-    code: number
-): Promise<CodeValidated> {
-    const session = await ParticipantSessionModel.findOne(
-        { participantEmail: secondSourceEmail, validSession: true },
-        { validationCode: 1, createdAt: 1 }
-    );
+export async function validateEmailVerificationCode({
+    secondSourceId,
+    participantId,
+    sampleId,
+    code,
+}: ValidateEmailVerificationParams) {
+    const { sample } = await getSampleById({ sampleId });
+    const participant = findParticipantById({ sample, participantId });
 
-    if (!session) {
-        throw Error("This participant haven't a active session.");
+    let secondSource = findSecondSourceById({ participant: participant as IParticipant, secondSourceId });
+
+    if (!secondSource?._id) {
+        throw Error("Second source email not found.");
     }
 
-    if (session.validationCode !== code) {
-        throw Error("Invalid validation code.");
+    if (!secondSource.verification || !secondSource.verification.code || !secondSource.verification.generatedAt) {
+        throw Error("Verification code not requested!");
     }
 
-    if (!session.createdAt) {
-        throw Error("Invalid participant session.");
+    if (secondSource.verification.code !== code) {
+        throw Error("Invalid verification code!");
     }
 
-    const sessionCreatedAtInMs = DateTime.fromISO(session.createdAt).toMillis();
+    const codeGeneratedAtInMs = DateTime.fromJSDate(secondSource.verification.generatedAt).toMillis();
     const currentDateInMs = DateTime.now().toMillis();
 
-    if (currentDateInMs - sessionCreatedAtInMs > SESSION_VALID_TIME_IN_MILISECONDS) {
+    if (currentDateInMs - codeGeneratedAtInMs > VERIFICATION_CODE_VALID_TIME_IN_MILISECONDS) {
         throw Error("Verification code expired!");
     }
 
-    const secondSource = await getSecondSourceByEmailAndParticipantId(secondSourceEmail, participantId);
-
     return {
-        participantToken: issueParticipantToken(secondSourceEmail, secondSource?.data._id),
-        adultFormStepToReturn: secondSource?.data.adultFormCurrentStep || EAdultFormSteps.PARTICIPANT_DATA,
+        token: issueSecondSourceAccessToken({ participantId, secondSourceId }),
+        secondSource,
     };
 }
 
