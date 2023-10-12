@@ -7,6 +7,7 @@ import { findParticipantById } from "./participant.service";
 import { getSampleById } from "./sample.service";
 import { findSecondSourceById } from "./secondSource.service";
 import { IParticipant } from "../interface/participant.interface";
+import { PartialDeep } from "type-fest";
 
 interface GetQuestionsByGroupParams {
     sourceForm: EAdultFormSource;
@@ -192,7 +193,7 @@ export async function calculatePunctuation(participantAnswers: IQuestionsGroup, 
 interface FinishFormParams {
     participantId: string;
     sampleId: string;
-    secondSourcesToDispatchEmails: ISecondSource[];
+    secondSourcesToDispatchEmails: PartialDeep<ISecondSource>[];
 }
 
 export async function finishForm({ participantId, sampleId, secondSourcesToDispatchEmails }: FinishFormParams) {
@@ -211,8 +212,8 @@ export async function finishForm({ participantId, sampleId, secondSourcesToDispa
         dispatchSecondSourceIndicationEmail({
             participantName: participant.personalData?.fullName as string,
             participantEmail: participant.personalData?.email as string,
-            secondSourceName: secondSource.personalData.fullName,
-            secondSourceEmail: secondSource.personalData.email,
+            secondSourceName: secondSource.personalData?.fullName as string,
+            secondSourceEmail: secondSource.personalData?.email as string,
             participantId: participantId,
             sampleId: sampleId,
         });
