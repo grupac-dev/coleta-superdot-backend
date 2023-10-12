@@ -1,14 +1,10 @@
 import { Request, Response } from "express";
 import * as SecondSourceService from "../service/secondSource.service";
-import { EmailAlreadyRegisteredError, ObjectNotExists } from "../error/participant.error";
-import {
-    SecondSourceAcceptAllSampleDocsDTO,
-    SecondSourceDataDTO,
-    ValidateEmailInParticipantSecondSourcesDTO,
-    ValidateSecondSourceVerificationCodeDTO,
-} from "../dto/secondSource.dto";
+import { ObjectNotExists } from "../error/participant.error";
+import { SecondSourceAcceptAllSampleDocsDTO, SecondSourceDataDTO } from "../dto/secondSource.dto";
 import { ISecondSource } from "../interface/secondSource.interface";
 import { SendValidationSecondSourceEmailDTO } from "../dto/secondSource/sendValidationSecondSourceEmail.dto";
+import { ValidateSecondSourceVerificationCodeDTO } from "../dto/secondSource/validateSecondSourceVerificationCode.dto";
 
 export async function handlerSendVerificationEmail(
     req: Request<SendValidationSecondSourceEmailDTO["params"], {}, SendValidationSecondSourceEmailDTO["body"], {}>,
@@ -30,24 +26,18 @@ export async function handlerSendVerificationEmail(
 }
 
 export async function handlerValidateSecondSourceVerificationCode(
-    req: Request<
-        ValidateSecondSourceVerificationCodeDTO["params"],
-        {},
-        ValidateSecondSourceVerificationCodeDTO["body"],
-        {}
-    >,
+    req: Request<ValidateSecondSourceVerificationCodeDTO["params"], {}, {}, {}>,
     res: Response
 ) {
     try {
-        const { secondSourceEmail, verificationCode } = req.body;
+        const { sampleId, participantId, secondSourceId, verificationCode } = req.params;
 
-        const { participantId } = req.params;
-
-        const token = await SecondSourceService.validateVerificationCode(
-            secondSourceEmail,
+        const token = await SecondSourceService.validateEmailVerificationCode({
+            secondSourceId,
             participantId,
-            verificationCode
-        );
+            sampleId,
+            code: verificationCode,
+        });
 
         res.status(200).json(token);
     } catch (e: any) {
