@@ -1,14 +1,14 @@
 import ResearcherModel from "../model/researcher.model";
 import { ISecondSource } from "../interface/secondSource.interface";
-import { EmailAlreadyRegisteredError, ObjectNotExists } from "../error/participant.error";
 import ParticipantSessionModel from "../model/participantSession.model";
 import { dispatchSecondSourceVerificationEmail } from "../util/emailSender.util";
 import { DateTime } from "luxon";
-import { EAdultFormSteps, SESSION_VALID_TIME_IN_MILISECONDS } from "../util/consts";
-import { issueParticipantToken } from "./participant.service";
+import { EAdultFormSteps, VERIFICATION_CODE_VALID_TIME_IN_MILISECONDS } from "../util/consts";
 import mongoose from "mongoose";
-
-const TO_GET_SIX_DIGITS_CODE = 1000000;
+import crypto from "crypto";
+import { getSampleById } from "./sample.service";
+import { IParticipant } from "../interface/participant.interface";
+import { findParticipantById } from "./participant.service";
 
 interface SecondSourceByEmail {
     sampleId: string;
@@ -45,24 +45,77 @@ export async function getSecondSourceByEmailAndParticipantId(email: string, part
     return secondSource[0];
 }
 
-export async function validateEmail(secondSourceEmail: string, participantId: string) {
-    const secondSource = await getSecondSourceByEmailAndParticipantId(secondSourceEmail, participantId);
+interface FindSecondSourceByEmailParams {
+    participant: IParticipant;
+    secondSourceEmail: string;
+}
 
-    const validationCode = Math.round(Math.random() * TO_GET_SIX_DIGITS_CODE);
+export function findSecondSourceByEmail({ participant, secondSourceEmail }: FindSecondSourceByEmailParams) {
+    const secondSource = participant.secondSources?.find(
+        (sSource) => sSource?.personalData?.email === secondSourceEmail
+    );
 
-    // Destroy all participant sessions
-    await ParticipantSessionModel.updateMany({ participantEmail: secondSourceEmail }, { validSession: false });
+    return secondSource;
+}
 
-    await ParticipantSessionModel.create({
-        participantEmail: secondSourceEmail,
-        validationCode,
-        validSession: true,
-    });
+interface SendEmailVerificationParams {
+    secondSourceEmail: string;
+    participantId: string;
+    sampleId: string;
+}
+
+export async function sendEmailVerification({
+    secondSourceEmail,
+    participantId,
+    sampleId,
+}: SendEmailVerificationParams) {
+    const verificationCode = crypto.randomBytes(128).toString("hex");
+
+    const { researcherDoc, sample } = await getSampleById({ sampleId });
+    const participant = findParticipantById({ sample, participantId });
+
+    if (!participant?.adultForm?.endFillFormAt) {
+        throw new Error("The participant hasn't finished the form.");
+    }
+
+    let secondSource = findSecondSourceByEmail({ participant: participant as IParticipant, secondSourceEmail });
+
+    if (secondSource) {
+        secondSource.verification = {
+            code: verificationCode,
+            generatedAt: new Date(),
+        };
+    } else {
+        // New participant
+        secondSource = {
+            personalData: { email: secondSourceEmail },
+            verification: {
+                code: verificationCode,
+                generatedAt: new Date(),
+            },
+        };
+
+        if (!participant.secondSources) {
+            participant.secondSources = [];
+        }
+
+        let arrLen = participant.secondSources.push(secondSource);
+        secondSource = participant.secondSources[arrLen - 1]; // Get participant id
+    }
+
+    if (!secondSource._id) {
+        throw new Error("Cannot send the verification email.");
+    }
+
+    await researcherDoc.save();
 
     dispatchSecondSourceVerificationEmail({
-        secondSourceName: secondSource?.data.personalData.fullName,
+        secondSourceName: secondSource?.personalData?.fullName,
         secondSourceEmail,
-        verificationCode: validationCode,
+        verificationCode: verificationCode,
+        participantId,
+        sampleId,
+        secondSourceId: secondSource._id,
     });
 
     return true;
