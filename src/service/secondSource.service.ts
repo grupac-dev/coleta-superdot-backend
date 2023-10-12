@@ -11,6 +11,7 @@ import { IParticipant } from "../interface/participant.interface";
 import { findParticipantById } from "./participant.service";
 import { issueSecondSourceAccessToken } from "./auth.service";
 import { PartialDeep } from "type-fest";
+import { SecondSourceModel } from "../model/schemas/secondSource.schema";
 
 interface FindSecondSourceByIdParams {
     participant: IParticipant;
@@ -206,6 +207,41 @@ export async function saveSecondSourceData({
             arrayFilters: [{ "sam._id": sampleId }, { "part._id": participantId }, { "secSource._id": secondSourceId }],
         }
     );
+
+    return true;
+}
+
+interface SubmitSecondSourceDataParams {
+    secondSourceId: string;
+    sampleId: string;
+    participantId: string;
+    secondSourceData: PartialDeep<ISecondSource>;
+}
+
+/**
+ * The function `submitParticipantData` is an asynchronous function that validates participant data
+ * using a `ParticipantModel` and saves it using `saveParticipantData`.
+ * @param {SubmitParticipantDataParams} params - Function parameters
+ * @param {string} params.secondSourceId - Second source id which submit the data.
+ * @param {string} params.sampleId - The ID of the sample to which the participant data belongs.
+ * @param {string} params.participantId - Id from the participant that owner the second source
+ * @param {PartialDeep<ISecondSource>} params.secondSourceData - Second source data to submit
+ * @returns a boolean value of `true`.
+ */
+export async function submitSecondSourceData({
+    secondSourceId,
+    sampleId,
+    participantId,
+    secondSourceData,
+}: SubmitSecondSourceDataParams) {
+    try {
+        SecondSourceModel.validate(secondSourceData);
+    } catch (e) {
+        console.error(e);
+        throw new Error("Second Source data is invalid!");
+    }
+
+    await saveSecondSourceData({ secondSourceId, sampleId, participantId, secondSourceData });
 
     return true;
 }
