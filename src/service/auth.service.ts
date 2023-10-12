@@ -56,3 +56,23 @@ export function issueParticipantAccessToken({ participantId }: IssueParticipantA
 
     return participantToken;
 }
+
+interface IssueSecondSourceAccessTokenParams {
+    participantId: string;
+    secondSourceId: string;
+}
+
+export function issueSecondSourceAccessToken({ participantId, secondSourceId }: IssueSecondSourceAccessTokenParams) {
+    const secondSourceToken = signJwt(
+        {
+            participantId,
+            secondSourceId,
+        },
+        "ACCESS_TOKEN_PRIVATE_KEY",
+        {
+            expiresIn: env.PARTICIPANT_TOKEN_TTL,
+        }
+    );
+
+    return secondSourceToken;
+}
