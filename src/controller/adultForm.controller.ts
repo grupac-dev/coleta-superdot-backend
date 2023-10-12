@@ -11,12 +11,7 @@ export async function handlerGetQuestionsByGroup(
     try {
         const { groupSequence, formSource } = req.params;
 
-        const participantId = res.locals.participantId;
-        if (!participantId) {
-            throw Error("Invalid participant JWT.");
-        }
-
-        const groupQuestions = await AdultFormService.getQuestionsByGroup(formSource, groupSequence);
+        const groupQuestions = await AdultFormService.getQuestionsByGroup({ sourceForm: formSource, groupSequence });
 
         if (!groupQuestions) {
             throw Error("Group questions not found");
@@ -36,17 +31,49 @@ export async function handlerSaveQuestionsByGroup(
     res: Response
 ) {
     try {
-        let { sampleId } = req.params;
+        const { sampleId } = req.params;
+        const { participantId, secondSourceId } = res.locals;
 
-        const participantId = res.locals.participantId; // Participant ID in JWT Token
+        if (secondSourceId) {
+            throw new Error("Cannot save participant questions using a second source JWT token.");
+        }
 
         const groupQuestionsWithAnswers: IQuestionsGroup = req.body;
 
-        const response = await AdultFormService.saveGroupQuestions(
+        const response = await AdultFormService.saveGroupQuestions({
             sampleId,
-            participantId as string,
-            groupQuestionsWithAnswers
-        );
+            participantId: participantId as string,
+            groupQuestionsWithAnswers,
+        });
+
+        if (!response) {
+            throw Error("Cannot submit these questions.");
+        }
+
+        res.status(200).json(response);
+    } catch (e: any) {
+        console.log(e);
+
+        // TO DO errors handlers
+        res.status(409).send(e.message);
+    }
+}
+
+export async function handlerSaveSecondSourceQuestionsByGroup(
+    req: Request<SaveQuestionsByGroupDTO["params"], {}, SaveQuestionsByGroupDTO["body"], {}>,
+    res: Response
+) {
+    try {
+        const { sampleId } = req.params;
+        const { participantId, secondSourceId } = res.locals;
+        const groupQuestionsWithAnswers: IQuestionsGroup = req.body;
+
+        const response = await AdultFormService.saveSecondSourceGroupQuestions({
+            secondSourceId,
+            sampleId,
+            participantId: participantId as string,
+            groupQuestionsWithAnswers,
+        });
 
         if (!response) {
             throw Error("Cannot submit these questions.");
