@@ -1,5 +1,5 @@
-import { Schema } from "mongoose";
-import { EAdultFormGroup, EAdultFormSteps, RELATIONSHIPS_ARRAY, RELATIONSHIP_TIME_ARRAY } from "../../util/consts";
+import { Schema, model } from "mongoose";
+import { EAdultFormGroup, RELATIONSHIPS_ARRAY, RELATIONSHIP_TIME_ARRAY } from "../../util/consts";
 import { ISecondSource } from "../../interface/secondSource.interface";
 import { questionSchema } from "../adultForm/schemas/question.schema";
 
@@ -40,32 +40,31 @@ export const secondSourceSchema = new Schema<ISecondSource>(
             phone: String,
             educationLevel: String,
         },
+        verification: {
+            code: String,
+            generatedAt: Date,
+        },
         acceptTaleIn: Date,
         acceptTcleIn: Date,
-        teacherSubject: String,
-        indicated: Boolean,
-        startFillFormDate: Date,
-        endFillFormDate: Date,
-        adultFormCurrentStep: {
-            type: Number,
-            enum: EAdultFormSteps,
+        adultForm: {
+            endFillFormAt: Date,
+            startFillFormAt: Date,
+            answersByGroup: [
+                {
+                    groupName: String,
+                    sequence: {
+                        type: Number,
+                        enum: EAdultFormGroup,
+                    },
+                    questions: [questionSchema],
+                },
+            ],
         },
-        adultFormAnswers: [
-            {
-                groupName: {
-                    type: String,
-                    required: [true, "Group name is required!"],
-                },
-                sequence: {
-                    type: Number,
-                    enum: EAdultFormGroup,
-                    required: [true, "Group sequence is required!"],
-                },
-                questions: [questionSchema],
-            },
-        ],
+        teacherSubject: String,
     },
     {
         timestamps: true,
     }
 );
+
+export const SecondSourceModel = model<ISecondSource>("SecondSource", secondSourceSchema);
