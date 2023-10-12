@@ -5,7 +5,10 @@ import { requireParticipantJWT } from "../middleware/requireParticipantJWT.middl
 import { secondSourceAcceptAllSampleDocsDTO } from "../dto/secondSource.dto";
 import { sendValidationSecondSourceEmailSchema } from "../dto/secondSource/sendValidationSecondSourceEmail.dto";
 import { validateSecondSourceVerificationCodeSchema } from "../dto/secondSource/validateSecondSourceVerificationCode.dto";
-import { saveSecondSourcePersonalDataSchema } from "../dto/secondSource/secondSourcePersonalData.dto";
+import {
+    saveSecondSourcePersonalDataSchema,
+    submitSecondSourcePersonalDataSchema,
+} from "../dto/secondSource/secondSourcePersonalData.dto";
 import { requireSecondSourceJWT } from "../middleware/requireSecondSourceJWT.middleware";
 
 const secondSourceRouter = express.Router();
@@ -30,9 +33,11 @@ secondSourceRouter.put(
     SecondSourceController.handlerSaveSecondSourceData
 );
 
-secondSourceRouter.post(
-    "/submitSecondSourceData/sample/:sampleId/participant/:participantId",
-    validateDTO(secondSourceDataDTO),
+secondSourceRouter.put(
+    "/submit-second-source-data/sample/:sampleId",
+    validateDTO(submitSecondSourcePersonalDataSchema),
+    requireSecondSourceJWT,
+    requireParticipantJWT,
     SecondSourceController.handlerSubmitSecondSourceData
 );
 
