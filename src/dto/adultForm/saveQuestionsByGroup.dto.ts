@@ -20,7 +20,7 @@ export const saveQuestionsByGroupSchema = object({
 
                     return val;
                 }),
-                options: array(object({ value: string(), points: number().optional() })),
+                options: array(object({ value: string(), points: number().optional() })).optional(),
                 answer: union([array(string().or(undefined())), string()]).optional(),
             }).transform((question, ctx) => {
                 if (Array.isArray(question.answer)) {
