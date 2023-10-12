@@ -13,6 +13,6 @@ export default interface IQuestion {
         parentId: string;
         isRequiredOnParentValue: string;
     };
-    answer?: string | (string | undefined)[]; // The undefined is because the user can save the answer before submit
+    answer?: string | (string | null)[]; // The undefined is because the user can save the answer before submit
     answerPoints?: number;
 }

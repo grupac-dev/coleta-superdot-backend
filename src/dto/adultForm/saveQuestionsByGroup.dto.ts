@@ -1,4 +1,4 @@
-import { array, number, object, string, z, union, undefined } from "zod";
+import { array, number, object, string, z, union, undefined, nullable } from "zod";
 import { EQuestionType } from "../../util/consts";
 import mongoose from "mongoose";
 
@@ -21,7 +21,7 @@ export const saveQuestionsByGroupSchema = object({
                     return val;
                 }),
                 options: array(object({ value: string(), points: number().optional() })).optional(),
-                answer: union([array(string().or(undefined())), string()]).optional(),
+                answer: union([array(nullable(string())), string()]).optional(),
             }).transform((question, ctx) => {
                 if (Array.isArray(question.answer)) {
                     if (question.questionType !== EQuestionType.MULTIPLE_SELECT && question.answer.length !== 4) {
