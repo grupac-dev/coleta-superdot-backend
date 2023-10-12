@@ -1,45 +1,7 @@
-import { boolean, number, object, string, z } from "zod";
+import { object, string, z } from "zod";
 import { EDUCATION_LEVEL_ARRAY, RELATIONSHIPS_ARRAY, RELATIONSHIP_TIME_ARRAY } from "../util/consts";
 import validator from "validator";
 import { DateTime } from "luxon";
-
-/** VALIDATE E-MAIL IN PARTICIPANT SECOND SOURCE*/
-export const validateEmailInParticipantSecondSourcesDTO = object({
-    body: object({
-        secondSourceEmail: string({
-            required_error: "Email is required!",
-        }).email("Email is invalid!"),
-    }),
-    params: object({
-        sampleId: string({
-            required_error: "Sample id param is required!",
-        }),
-        participantId: string({
-            required_error: "Participant id param is required!",
-        }),
-    }),
-});
-
-export type ValidateEmailInParticipantSecondSourcesDTO = z.infer<typeof validateEmailInParticipantSecondSourcesDTO>;
-
-/** VERIFICATION CODE */
-export const validateSecondSourceVerificationCodeDTO = object({
-    body: object({
-        secondSourceEmail: string({
-            required_error: "Participant email is required!",
-        }),
-        verificationCode: number({
-            required_error: "Verification code is required!",
-        }),
-    }),
-    params: object({
-        participantId: string({
-            required_error: "Participant id param is required!",
-        }),
-    }),
-});
-
-export type ValidateSecondSourceVerificationCodeDTO = z.infer<typeof validateSecondSourceVerificationCodeDTO>;
 
 export const secondSourceDataDTO = object({
     body: object({
