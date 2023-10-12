@@ -1,20 +1,20 @@
 import express from "express";
 import { validateDTO } from "../middleware/validateDTO.middleware";
 import * as SecondSourceController from "../controller/secondSource.controller";
-import { requireParticipantJWT } from "../middleware/requireParticipantJWT";
+import { requireParticipantJWT } from "../middleware/requireParticipantJWT.middleware";
 import {
     secondSourceAcceptAllSampleDocsDTO,
     secondSourceDataDTO,
-    validateEmailInParticipantSecondSourcesDTO,
     validateSecondSourceVerificationCodeDTO,
 } from "../dto/secondSource.dto";
+import { sendValidationSecondSourceEmailSchema } from "../dto/secondSource/sendValidationSecondSourceEmail.dto";
 
 const secondSourceRouter = express.Router();
 
 secondSourceRouter.post(
-    "/verifySecondSourceEmail/sample/:sampleId/participant/:participantId",
-    validateDTO(validateEmailInParticipantSecondSourcesDTO),
-    SecondSourceController.handlerValidateEmailInParticipantSecondSources
+    "/send-verification-code/sample/:sampleId/participant/:participantId",
+    validateDTO(sendValidationSecondSourceEmailSchema),
+    SecondSourceController.handlerSendVerificationEmail
 );
 
 secondSourceRouter.patch(

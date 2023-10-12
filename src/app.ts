@@ -28,17 +28,17 @@ app.use("/api/auth", authRouter);
 
 app.use("/api/researcher", researcherRouter);
 
-app.use("/api/sampleGroup", sampleGroupRouter);
+app.use("/api/sample-group", sampleGroupRouter);
 
 app.use("/api/sample", sampleRouter);
 
-app.use("/api/sampleReview", sampleReviewRouter);
+app.use("/api/sample-review", sampleReviewRouter);
 
-app.use("/api/adultForm", adultFormRoute);
+app.use("/api/adult-form", adultFormRoute);
 
 app.use("/api/participant", participantRouter);
 
-app.use("/api/secondSource", secondSourceRouter);
+app.use("/api/second-source", secondSourceRouter);
 
 app.use((req, res, next) => {
     next(createHttpError(404, "Endpoint not found"));
