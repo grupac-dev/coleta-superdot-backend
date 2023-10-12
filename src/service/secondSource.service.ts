@@ -10,6 +10,7 @@ import { getSampleById } from "./sample.service";
 import { IParticipant } from "../interface/participant.interface";
 import { findParticipantById } from "./participant.service";
 import { issueSecondSourceAccessToken } from "./auth.service";
+import { PartialDeep } from "type-fest";
 
 interface FindSecondSourceByIdParams {
     participant: IParticipant;
@@ -149,82 +150,64 @@ export async function validateEmailVerificationCode({
     };
 }
 
-export async function saveSecondSourceData(sampleId: string, participantId: string, secondSourceData: ISecondSource) {
-    if (!mongoose.Types.ObjectId.isValid(sampleId)) {
-        throw new Error("Sample id is invalid.");
+interface SaveSecondSourceDataParams {
+    secondSourceId: string;
+    sampleId: string;
+    participantId: string;
+    secondSourceData: PartialDeep<ISecondSource>;
+}
+
+/**
+ * The `saveSecondSourceData` function updates the personal data and startFillFormAt field of a second
+ * source for a given sample and participant.
+ * @param {SaveSecondSourceDataParams} params - Function parameters
+ * @param {string} params.secondSourceId - Second source id to update the data
+ * @param {string} params.sampleId - Id from research sample
+ * @param {string} params.participantId - Id from the participant that owner the second source
+ * @param {PartialDeep<ISecondSource>} params.secondSourceData - Second source data to save
+ * @returns a boolean value of `true`.
+ */
+export async function saveSecondSourceData({
+    secondSourceId,
+    sampleId,
+    participantId,
+    secondSourceData,
+}: SaveSecondSourceDataParams) {
+    const { sample } = await getSampleById({ sampleId });
+    const participant = findParticipantById({ participantId, sample });
+
+    let secondSource = findSecondSourceById({ participant: participant as IParticipant, secondSourceId });
+    if (secondSource.personalData?.email) {
+        secondSourceData = {
+            ...secondSourceData,
+            personalData: {
+                ...secondSourceData.personalData,
+                // Using the email already registered in the database
+                email: secondSource.personalData.email,
+            },
+        };
     }
 
-    const researcherDoc = await ResearcherModel.findOne({ "researchSamples._id": sampleId });
-
-    if (!researcherDoc || !researcherDoc.researchSamples) {
-        throw new Error("Sample not found.");
-    }
-
-    const sample = researcherDoc.researchSamples.find((sample) => sample._id?.toString() === sampleId);
-
-    if (!sample) {
-        throw new Error("Sample not found.");
-    }
-
-    const participant = sample.participants?.find((participant) => participant._id?.toString() === participantId);
-
-    if (!participant) {
-        throw new Error("Participant not found.");
-    }
-
-    // First step finished. Set the next step
-    secondSourceData.adultFormCurrentStep = EAdultFormSteps.READ_AND_ACCEPT_DOCS;
-
-    const secondSourceIndicated = participant.secondSources?.find(
-        (secondSource) =>
-            secondSource.personalData.email === secondSourceData.personalData.email && secondSource.indicated
+    await ResearcherModel.findOneAndUpdate(
+        {
+            "researchSamples._id": sampleId,
+            "researchSamples.participants._id": participantId,
+            "researchSamples.participants.secondSources._id": secondSourceId,
+        },
+        {
+            $set: {
+                "researchSamples.$[sam].participants.$[part].secondSources.$[secSource].personalData":
+                    secondSourceData.personalData,
+                "researchSamples.$[sam].participants.$[part].secondSources.$[secSource].adultForm.startFillFormAt":
+                    new Date(),
+            },
+        },
+        {
+            arrayFilters: [{ "sam._id": sampleId }, { "part._id": participantId }, { "secSource._id": secondSourceId }],
+        }
     );
 
-    if (secondSourceIndicated) {
-        participant.secondSources?.every(async (secondSource) => {
-            if (secondSource._id === secondSourceIndicated._id) {
-                await ResearcherModel.updateOne(
-                    { "researchSamples.participants.secondSources._id": secondSourceIndicated._id },
-                    {
-                        $set: {
-                            "researchSamples.$[].participants.$[partDoc].secondSources.$[secSource].personalData":
-                                secondSourceData.personalData,
-                            "researchSamples.$[].participants.$[partDoc].secondSources.$[secSource].adultFormCurrentStep":
-                                secondSourceData.adultFormCurrentStep,
-                            "researchSamples.$[].participants.$[partDoc].secondSources.$[secSource].startFillFormDate":
-                                new Date(),
-                        },
-                    },
-                    {
-                        // https://thecodebarbarian.com/a-nodejs-perspective-on-mongodb-36-array-filters
-                        arrayFilters: [
-                            { "partDoc._id": participant._id },
-                            { "secSource._id": secondSourceIndicated._id },
-                        ],
-                    }
-                );
-                return false; // End loop
-            } else return true; // Continue loop
-        });
-
-        return issueParticipantToken(secondSourceIndicated.personalData.email, secondSourceIndicated?._id);
-    }
-
-    secondSourceData.startFillFormDate = new Date().toISOString();
-
-    participant.secondSources?.push(secondSourceData);
-
-    await researcherDoc.save();
-
-    const secondSourceCreated = participant.secondSources?.find(
-        (participant) => participant.personalData.email === secondSourceData.personalData.email
-    );
-
-    if (!secondSourceCreated || !secondSourceCreated._id) {
-        throw new Error("The SecondSource object was not created.");
-    }
-
-    return issueParticipantToken(secondSourceCreated.personalData.email, secondSourceCreated?._id);
+    return true;
 }
 
 export async function acceptAllSampleDocs(sampleId: string, participantId: string, secondSourceId: string) {
