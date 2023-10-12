@@ -17,7 +17,10 @@ export interface ISecondSource {
         phone?: string;
         educationLevel?: EducationLevelType;
     };
-    indicated?: boolean;
+    verification?: {
+        code: string;
+        generatedAt: Date;
+    };
     acceptTcleIn?: Date;
     acceptTaleIn?: Date;
     teacherSubject?: string;

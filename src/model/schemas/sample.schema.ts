@@ -180,6 +180,10 @@ export const sampleSchema = new Schema<ISample>(
                             phone: String,
                             educationLevel: String,
                         },
+                        verification: {
+                            code: String,
+                            generatedAt: Date,
+                        },
                         acceptTaleIn: Date,
                         acceptTcleIn: Date,
                         teacherSubject: String,

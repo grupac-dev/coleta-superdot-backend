@@ -53,7 +53,7 @@ export interface IParticipant {
         text?: string;
         videoUrl?: string;
     };
-    secondSources?: ISecondSource[];
+    secondSources?: PartialDeep<ISecondSource>[];
     createdAt?: Date;
     updatedAt?: Date;
 }
