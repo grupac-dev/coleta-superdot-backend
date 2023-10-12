@@ -1,10 +1,10 @@
 import { Request, Response } from "express";
 import * as SecondSourceService from "../service/secondSource.service";
 import { ObjectNotExists } from "../error/participant.error";
-import { SecondSourceAcceptAllSampleDocsDTO, SecondSourceDataDTO } from "../dto/secondSource.dto";
-import { ISecondSource } from "../interface/secondSource.interface";
+import { SecondSourceAcceptAllSampleDocsDTO } from "../dto/secondSource.dto";
 import { SendValidationSecondSourceEmailDTO } from "../dto/secondSource/sendValidationSecondSourceEmail.dto";
 import { ValidateSecondSourceVerificationCodeDTO } from "../dto/secondSource/validateSecondSourceVerificationCode.dto";
+import { SaveSecondSourcePersonalDataDTO } from "../dto/secondSource/secondSourcePersonalData.dto";
 
 export async function handlerSendVerificationEmail(
     req: Request<SendValidationSecondSourceEmailDTO["params"], {}, SendValidationSecondSourceEmailDTO["body"], {}>,
@@ -45,6 +45,35 @@ export async function handlerValidateSecondSourceVerificationCode(
 
         // TO DO errors handlers
         res.status(409).send(e.message);
+    }
+}
+
+export async function handlerSaveSecondSourceData(
+    req: Request<SaveSecondSourcePersonalDataDTO["params"], {}, SaveSecondSourcePersonalDataDTO["body"], {}>,
+    res: Response
+) {
+    try {
+        const secondSourceData = req.body;
+        const { sampleId } = req.params;
+        const { participantId, secondSourceId } = res.locals;
+
+        const saved = await SecondSourceService.saveSecondSourceData({
+            sampleId,
+            participantId,
+            secondSourceId,
+            secondSourceData,
+        });
+
+        res.status(200).json(saved);
+    } catch (e: any) {
+        console.log(e);
+
+        if (e instanceof ObjectNotExists) {
+            return res.status(404).send(e.message);
+        }
+
+        // TO DO errors handlers
+        res.status(500).send(e.message);
     }
 }
 
