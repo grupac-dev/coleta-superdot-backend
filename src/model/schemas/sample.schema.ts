@@ -184,8 +184,8 @@ export const sampleSchema = new Schema<ISample>(
                             code: String,
                             generatedAt: Date,
                         },
-                        acceptTaleIn: Date,
-                        acceptTcleIn: Date,
+                        acceptTaleAt: Date,
+                        acceptTcleAt: Date,
                         adultForm: {
                             endFillFormAt: Date,
                             startFillFormAt: Date,

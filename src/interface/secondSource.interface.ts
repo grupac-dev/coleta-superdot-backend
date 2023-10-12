@@ -21,8 +21,8 @@ export interface ISecondSource {
         code: string;
         generatedAt: Date;
     };
-    acceptTcleIn?: Date;
-    acceptTaleIn?: Date;
+    acceptTcleAt?: Date;
+    acceptTaleAt?: Date;
     adultForm?: {
         endFillFormAt?: Date;
         startFillFormAt?: Date;

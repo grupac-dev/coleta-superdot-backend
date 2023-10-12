@@ -44,8 +44,8 @@ export const secondSourceSchema = new Schema<ISecondSource>(
             code: String,
             generatedAt: Date,
         },
-        acceptTaleIn: Date,
-        acceptTcleIn: Date,
+        acceptTaleAt: Date,
+        acceptTcleAt: Date,
         adultForm: {
             endFillFormAt: Date,
             startFillFormAt: Date,
