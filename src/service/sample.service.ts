@@ -1,7 +1,36 @@
+import mongoose from "mongoose";
 import { Page } from "../interface/page.interface";
-import IResearcher from "../interface/researcher.interface";
 import ISample from "../interface/sample.interface";
 import ResearcherModel from "../model/researcher.model";
+import { ISampleParticipantSummay } from "../interface/sampleParticipantSummary";
+import { EAdultFormSteps, TParticipantFormProgress } from "../util/consts";
+
+interface GetSampleByIdParams {
+    sampleId: string;
+}
+
+export async function getSampleById({ sampleId }: GetSampleByIdParams) {
+    if (!mongoose.Types.ObjectId.isValid(sampleId)) {
+        throw new Error("Sample id is invalid.");
+    }
+
+    const researcherDoc = await ResearcherModel.findOne({ "researchSamples._id": sampleId });
+
+    if (!researcherDoc || !researcherDoc.researchSamples) {
+        throw new Error("Sample not found.");
+    }
+
+    const sample = researcherDoc.researchSamples.find((sample) => sample._id?.toString() === sampleId);
+
+    if (!sample) {
+        throw new Error("Sample not found.");
+    }
+
+    return {
+        researcherDoc,
+        sample,
+    };
+}
 
 export async function createSample(researcherId: string, sampleData: ISample): Promise<ISample> {
     const researcher = await ResearcherModel.findById(researcherId);
@@ -186,4 +215,92 @@ export async function deleteSample(currentResearcherId: string, sampleId: string
     await researcher.save();
 
     return true;
+}
+
+interface IRequiredDoc {
+    jsonFileKey: string;
+    backendFileName: string;
+    label: string;
+}
+
+export async function getRequiredDocs(sampleId: string) {
+    if (!mongoose.Types.ObjectId.isValid(sampleId)) {
+        throw new Error("Sample id is invalid.");
+    }
+
+    const researcher = await ResearcherModel.findOne(
+        { "researchSamples._id": sampleId },
+        {
+            "researchSamples._id": 1,
+            "researchSamples.researchCep.tcleDocument": 1,
+            "researchSamples.researchCep.taleDocument": 1,
+        }
+    );
+
+    if (!researcher || !researcher.researchSamples) {
+        throw new Error("Sample not found!");
+    }
+
+    const sample = researcher.researchSamples.find((sample) => sample._id?.toString() === sampleId);
+
+    if (!sample) {
+        throw new Error("Sample not found!");
+    }
+
+    const docs: IRequiredDoc[] = [];
+
+    if (sample.researchCep.taleDocument) {
+        docs.push({
+            jsonFileKey: "taleDocument",
+            backendFileName: sample.researchCep.taleDocument,
+            label: "Termo de Anuência Livre e Esclarecido",
+        });
+    }
+
+    if (sample.researchCep.tcleDocument) {
+        docs.push({
+            jsonFileKey: "tcleDocument",
+            backendFileName: sample.researchCep.tcleDocument,
+            label: "Termo de Compromisso Livre e Esclarecido",
+        });
+    }
+
+    return docs;
+}
+
+export async function getParticipantRegistrationProgress(
+    sampleId: string
+): Promise<ISampleParticipantSummay[] | undefined> {
+    if (!mongoose.Types.ObjectId.isValid(sampleId)) {
+        throw new Error("Sample id is invalid.");
+    }
+
+    const researcherDoc = await ResearcherModel.findOne({ "researchSamples._id": sampleId });
+
+    if (!researcherDoc || !researcherDoc.researchSamples) {
+        throw new Error("Sample not found.");
+    }
+
+    const sample = researcherDoc.researchSamples.find((sample) => sample._id?.toString() === sampleId);
+
+    if (!sample) {
+        throw new Error("Sample not found.");
+    }
+
+    const summary = sample.participants?.map((participant) => {
+        let progress: TParticipantFormProgress = "Preenchendo";
+
+        return {
+            sampleId: sample._id as string,
+            participantId: participant._id as string,
+            fullName: participant.personalData?.fullName || "",
+            progress,
+            qttSecondSources: participant.secondSources?.length || 0,
+            startDate: participant.createdAt as Date,
+            endDate: new Date(),
+            giftednessIndicators: participant.giftdnessIndicators,
+        };
+    });
+
+    return summary;
 }

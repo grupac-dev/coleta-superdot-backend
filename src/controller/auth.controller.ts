@@ -1,7 +1,6 @@
 import { Request, Response } from "express";
 import { ResearcherDTO } from "../dto/researcher.dto";
 import * as ResearcherService from "../service/researcher.service";
-import * as SessionService from "../service/session.service";
 import { hashContent } from "../util/hash";
 import IResearcher from "../interface/researcher.interface";
 import { get } from "lodash";
@@ -9,6 +8,9 @@ import env from "../util/validateEnv";
 import { Types } from "mongoose";
 import { LoginDTO, SetUserRoleDTO } from "../dto/auth.dto";
 import { UserRoleDTO } from "../dto/auth.dto";
+import { dispatchNewRoleEmail } from "../util/emailSender.util";
+import { RolesType } from "../util/consts";
+import { issueResearcherAccessToken, issueResearcherRefreshToken } from "../service/auth.service";
 
 export async function registerHandler(req: Request<{}, {}, ResearcherDTO["body"], {}>, res: Response) {
     try {
@@ -24,13 +26,16 @@ export async function registerHandler(req: Request<{}, {}, ResearcherDTO["body"]
 
         const researcherCreated = await ResearcherService.createResearcher(researcherData);
 
-        const session = await SessionService.createSession(
-            new Types.ObjectId(get(researcherCreated, "_id")),
-            req.get("user-agent") || ""
-        );
+        if (!researcherCreated._id) throw new Error("Cannot create researcher object");
 
-        const accessToken = SessionService.issueAccessToken(session);
-        const refreshToken = SessionService.issueRefreshToken(session);
+        const accessToken = issueResearcherAccessToken({
+            researcherId: researcherCreated._id,
+            role: researcherCreated.role,
+        });
+
+        const refreshToken = issueResearcherRefreshToken({
+            researcherId: researcherCreated._id,
+        });
 
         res.status(200).json({ accessToken, refreshToken });
     } catch (e: any) {
@@ -45,17 +50,18 @@ export async function loginHandler(req: Request<{}, {}, LoginDTO["body"], {}>, r
     try {
         const researcher = await ResearcherService.validatePassword(req.body);
 
-        if (!researcher) {
+        if (!researcher || !researcher._id) {
             return res.status(401).send("Invalid email or password");
         }
 
-        const session = await SessionService.createSession(
-            new Types.ObjectId(get(researcher, "_id")),
-            req.get("user-agent") || ""
-        );
+        const accessToken = issueResearcherAccessToken({
+            researcherId: researcher._id,
+            role: researcher.role,
+        });
 
-        const accessToken = SessionService.issueAccessToken(session, (researcher as IResearcher).role);
-        const refreshToken = SessionService.issueRefreshToken(session);
+        const refreshToken = issueResearcherRefreshToken({
+            researcherId: researcher._id,
+        });
 
         res.status(200).json({ accessToken, refreshToken });
     } catch (e: any) {
@@ -63,16 +69,6 @@ export async function loginHandler(req: Request<{}, {}, LoginDTO["body"], {}>, r
 
         // TO DO errors handlers
         res.status(409).send(e.message);
-    }
-}
-
-export async function isValidSession(req: Request, res: Response) {
-    try {
-        const session = res.locals.session;
-        res.status(200).json({ valid: session?.valid });
-    } catch (e) {
-        console.error(e);
-        res.status(200).json({ valid: false });
     }
 }
 
@@ -91,12 +87,28 @@ export async function userRoleHandler(req: Request<UserRoleDTO["params"], {}, {}
 
 export async function setUserRoleHandler(req: Request<{}, {}, SetUserRoleDTO["body"], {}>, res: Response) {
     try {
-        const { userId, newRole, emailMessage } = req.body;
-        await ResearcherService.updateResearcher({ _id: userId }, { role: newRole });
+        const adm = await ResearcherService.findResearcher({ _id: res.locals.session?.researcherId });
 
-        if (emailMessage) {
-            console.log(emailMessage);
+        if (!adm) {
+            throw new Error("Invalid session!");
         }
+
+        const { userId, emailMessage } = req.body;
+        if (!req.body.newRole.match("Pesquisador|Administrador|Revisor")) {
+            throw new Error("Invalid role!");
+        }
+        const newRole = req.body.newRole as RolesType;
+
+        const researcherUpdated = await ResearcherService.updateResearcher({ _id: userId }, { role: newRole });
+
+        dispatchNewRoleEmail({
+            admEmail: adm.email,
+            admMessage: emailMessage,
+            admName: adm.personalData.fullName,
+            newRole,
+            researcherEmail: researcherUpdated.email,
+            researcherName: researcherUpdated.personalData.fullName,
+        });
 
         res.status(200).end();
     } catch (e) {

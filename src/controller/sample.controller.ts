@@ -5,6 +5,8 @@ import {
     CreateSampleDTO,
     DeleteSampleDTO,
     EditSampleDTO,
+    GetParticipantRegistrationProgressDTO,
+    GetRequiredDocsDTO,
     PaginateAllSampleDTO,
     PaginateSampleDTO,
 } from "../dto/sample.dto";
@@ -49,8 +51,6 @@ export async function editSampleHandler(
     res: Response
 ) {
     try {
-        console.log(req.body);
-        console.log(req.files);
         const researcherId = res.locals.session?.researcherId;
 
         if (!researcherId) {
@@ -149,6 +149,39 @@ export async function deleteSample(req: Request<DeleteSampleDTO["params"], {}, {
         res.status(200).send();
     } catch (e) {
         console.log(e);
+
+        // TO DO errors handlers
+        res.status(409).json(e);
+    }
+}
+
+export async function handlerGetRequiredDocs(req: Request<GetRequiredDocsDTO["params"], {}, {}, {}>, res: Response) {
+    try {
+        const sampleId = req.params.sampleId;
+
+        const docs = await SampleService.getRequiredDocs(sampleId);
+
+        res.status(200).json(docs);
+    } catch (e) {
+        console.error(e);
+
+        // TO DO errors handlers
+        res.status(409).json(e);
+    }
+}
+
+export async function handlerGetParticipantRegistrationProgress(
+    req: Request<GetParticipantRegistrationProgressDTO["params"], {}, {}, {}>,
+    res: Response
+) {
+    try {
+        const sampleId = req.params.sampleId;
+
+        const participants = await SampleService.getParticipantRegistrationProgress(sampleId);
+
+        res.status(200).json(participants);
+    } catch (e) {
+        console.error(e);
 
         // TO DO errors handlers
         res.status(409).json(e);

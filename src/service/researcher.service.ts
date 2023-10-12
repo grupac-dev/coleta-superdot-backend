@@ -3,6 +3,8 @@ import IResearcher from "../interface/researcher.interface";
 import ResearcherModel from "../model/researcher.model";
 import { omit } from "lodash";
 import { compareHashes } from "../util/hash";
+import { getSampleById } from "./sample.service";
+import { findParticipantById } from "./participant.service";
 
 export async function createResearcher(researcherData: IResearcher): Promise<IResearcher> {
     try {
@@ -59,7 +61,8 @@ export async function paginateResearchers(
                 ],
             },
             {
-                "personalData.fullName": true,
+                fullname: "$personalData.fullName",
+                role: true,
                 email: true,
             }
         )
@@ -90,23 +93,17 @@ export async function findResearcher(query: FilterQuery<IResearcher>): Promise<I
     return omit(researcher, "passwordHash");
 }
 
-export async function validatePassword({
-    email,
-    password,
-}: {
-    email: string;
-    password: string;
-}): Promise<IResearcher | Boolean> {
+export async function validatePassword({ email, password }: { email: string; password: string }) {
     const researcher = await ResearcherModel.findOne({ email });
 
     if (!researcher) {
-        return false;
+        throw new Error("Email not found");
     }
 
     const isValid = await compareHashes(password, researcher.passwordHash || "");
 
     if (!isValid) {
-        return false;
+        throw new Error("Passwords don't match!");
     }
 
     return omit(researcher.toJSON(), "passwordHash");
@@ -139,4 +136,27 @@ export async function isAttachmentOwner(fileName: string, researcherId: string) 
     }
 
     return true;
+}
+
+export async function getResearcherNameBySampleId(sampleId: string) {
+    const { researcherDoc } = await getSampleById({ sampleId });
+    return researcherDoc.personalData.fullName;
+}
+
+interface GetResearchDataBySampleIdAndParticipantIdParams {
+    sampleId: string;
+    participantId: string;
+}
+
+export async function getResearchDataBySampleIdAndParticipantId({
+    sampleId,
+    participantId,
+}: GetResearchDataBySampleIdAndParticipantIdParams) {
+    const { researcherDoc, sample } = await getSampleById({ sampleId });
+    const participant = findParticipantById({ sample, participantId });
+
+    return {
+        researcherName: researcherDoc.personalData.fullName,
+        participantName: participant.personalData?.fullName,
+    };
 }

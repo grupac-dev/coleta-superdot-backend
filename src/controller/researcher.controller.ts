@@ -3,6 +3,8 @@ import * as ResearcherService from "../service/researcher.service";
 import { hashContent } from "../util/hash";
 import IResearcher from "../interface/researcher.interface";
 import { PaginateResearcherDTO, UpdateResearcherDTO, paginateResearcherParams } from "../dto/researcher.dto";
+import { GetResearcherNameBySampleIdDTO } from "../dto/researcher/getResearcherNameBySampleId.dto";
+import { GetResearchDataBySampleIdAndParticipantIdDTO } from "../dto/researcher/getResearchDataBySampleIdAndParticipantId.dto";
 
 export async function updateResearcherHandler(req: Request<{}, {}, UpdateResearcherDTO["body"], {}>, res: Response) {
     try {
@@ -50,6 +52,45 @@ export async function paginateResearchers(
         const page = await ResearcherService.paginateResearchers(currentPage, itemsPerPage, req.query, researcherId);
 
         res.status(200).json(page);
+    } catch (e) {
+        console.log(e);
+
+        // TO DO errors handlers
+        res.status(409).send(e);
+    }
+}
+
+export async function handlerGetReseacherNameBySampleId(
+    req: Request<GetResearcherNameBySampleIdDTO["params"], {}, {}, {}>,
+    res: Response
+) {
+    try {
+        const { sampleId } = req.params;
+
+        const researcherName = await ResearcherService.getResearcherNameBySampleId(sampleId);
+
+        res.status(200).json(researcherName);
+    } catch (e) {
+        console.log(e);
+
+        // TO DO errors handlers
+        res.status(409).send(e);
+    }
+}
+
+export async function handlerGetReseachDataBySampleIdAndParticipantId(
+    req: Request<GetResearchDataBySampleIdAndParticipantIdDTO["params"], {}, {}, {}>,
+    res: Response
+) {
+    try {
+        const { sampleId, participantId } = req.params;
+
+        const researcherName = await ResearcherService.getResearchDataBySampleIdAndParticipantId({
+            sampleId,
+            participantId,
+        });
+
+        res.status(200).json(researcherName);
     } catch (e) {
         console.log(e);
 

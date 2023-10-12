@@ -1,4 +1,6 @@
+import { PartialDeep } from "type-fest";
 import { InstituitionType, SampleStatus } from "../util/consts";
+import { IParticipant } from "./participant.interface";
 import ISampleReview from "./sampleReview.interface";
 
 export default interface ISample {
@@ -8,7 +10,6 @@ export default interface ISample {
     sampleGroup?: string; // Required only in POST actions, unnecessary in PUT actions
     qttParticipantsRequested: number;
     qttParticipantsAuthorized?: number; // Updated only by backend
-    qttParticipantsRegistered?: number; // Updated only by backend
     researchCep: {
         cepCode: string;
         researchDocument?: string;
@@ -24,7 +25,7 @@ export default interface ISample {
         instType: InstituitionType;
     };
     reviews?: [ISampleReview];
-    participants?: [];
+    participants?: PartialDeep<IParticipant>[];
     approvedAt?: Date;
     createdAt?: Date;
     updatedAt?: Date;

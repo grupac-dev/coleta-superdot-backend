@@ -1,17 +1,19 @@
 import express from "express";
 import * as SampleController from "../controller/sample.controller";
-import { requireActiveSession } from "../middleware/requireActiveSession.middleware";
 import {
     createSampleDTO,
     deleteSampleDTO,
     editSampleDTO,
+    getParticipantRegistrationProgressDTO,
+    getRequiredDocsDTO,
     paginateAllSampleDTO,
     paginateSampleDTO,
 } from "../dto/sample.dto";
 import { validateDTO } from "../middleware/validateDTO.middleware";
 import { uploaderConfig } from "../util/uploader";
 import { requireRole } from "../middleware/requireRole.middleware";
-import { protectResource } from "../middleware/protectResource.middleware";
+import { requireParticipantJWT } from "../middleware/requireParticipantJWT.middleware";
+import { requireResearcherJWT } from "../middleware/requireResearcherJWT.middleware";
 
 const sampleRouter = express.Router();
 
@@ -23,18 +25,18 @@ const uploaderFields = uploaderConfig.fields([
 
 sampleRouter.post(
     "/newSample",
-    [uploaderFields, validateDTO(createSampleDTO), requireActiveSession],
+    [uploaderFields, validateDTO(createSampleDTO), requireResearcherJWT],
     SampleController.createSampleHandler
 );
 sampleRouter.put(
     "/updateSample/:sampleId",
-    [uploaderFields, validateDTO(editSampleDTO), requireActiveSession],
+    [uploaderFields, validateDTO(editSampleDTO), requireResearcherJWT],
     SampleController.editSampleHandler
 );
 
 sampleRouter.get(
     "/paginate/:itemsPerPage/page/:currentPage",
-    [validateDTO(paginateSampleDTO), requireActiveSession],
+    [validateDTO(paginateSampleDTO), requireResearcherJWT],
     SampleController.paginateResearcherSamples
 );
 
@@ -44,12 +46,25 @@ sampleRouter.get(
     SampleController.paginateAllSamples
 );
 
-sampleRouter.use("/attachment", protectResource, express.static("src/storage/uploads"));
+sampleRouter.get(
+    "/listRequiredDocs/:sampleId",
+    [validateDTO(getRequiredDocsDTO), requireParticipantJWT],
+    SampleController.handlerGetRequiredDocs
+);
+
+sampleRouter.use("/attachment", express.static("src/storage/uploads"));
 
 sampleRouter.delete(
     "/deleteSample/:sampleId",
-    [validateDTO(deleteSampleDTO), requireActiveSession],
+    [validateDTO(deleteSampleDTO), requireResearcherJWT],
     SampleController.deleteSample
+);
+
+sampleRouter.get(
+    "/participantRegistrationProgress/:sampleId",
+    validateDTO(getParticipantRegistrationProgressDTO),
+    requireResearcherJWT,
+    SampleController.handlerGetParticipantRegistrationProgress
 );
 
 export { sampleRouter };
