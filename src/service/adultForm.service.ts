@@ -1,16 +1,29 @@
-import { EAdultFormGroup, EAdultFormSource, EAdultFormSteps, EQuestionType } from "../util/consts";
+import { EAdultFormGroup, EAdultFormSource } from "../util/consts";
 import SourceQuestionsGroupModel from "../model/adultForm/sourceQuestionsGroup.model";
 import IQuestionsGroup from "../interface/adultForm/questionsGroup.interface";
-import IQuestion from "../interface/adultForm/question.interface";
 import { ISecondSource } from "../interface/secondSource.interface";
 import { dispatchSecondSourceIndicationEmail } from "../util/emailSender.util";
 import { findParticipantById } from "./participant.service";
 import { getSampleById } from "./sample.service";
+import { findSecondSourceById } from "./secondSource.service";
+import { IParticipant } from "../interface/participant.interface";
 
-// The quantity of form steps that exists before the participant start answer the form groups questions.
-const QTT_STEP_BEFORE_GROUPS_QUESTIONS = 4;
+interface GetQuestionsByGroupParams {
+    sourceForm: EAdultFormSource;
+    groupSequence: EAdultFormGroup;
+}
 
-export async function getQuestionsByGroup(sourceForm: EAdultFormSource, groupSequence: EAdultFormGroup) {
+/**
+ * The function `getQuestionsByGroup` retrieves a group of questions based on the source form and group
+ * sequence provided.
+ * @param {EAdultFormSource} params.sourceForm - The `sourceForm` parameter is of type `EAdultFormSource` and
+ * represents the source form number. It is used to filter the questions based on the source form.
+ * @param {EAdultFormGroup} params.groupSequence - The `groupSequence` parameter is of type `EAdultFormGroup` and represents
+ * the sequence of the group within the source form. It is used to filter and retrieve the questions
+ * belonging to a specific group within the source form.
+ * @returns an object that contains the group name, sequence, and an array of `IQuestions`.
+ */
+export async function getQuestionsByGroup({ sourceForm, groupSequence }: GetQuestionsByGroupParams) {
     const sourceQuestionsGroup = await SourceQuestionsGroupModel.aggregate<IQuestionsGroup>()
         .match({ source: Number(sourceForm) })
         .unwind("$groups")
@@ -29,62 +42,26 @@ export async function getQuestionsByGroup(sourceForm: EAdultFormSource, groupSeq
     return sourceQuestionsGroup[0];
 }
 
-export async function saveGroupQuestions(
-    sampleId: string,
-    participantId: string,
-    groupQuestionsAndAnswers: IQuestionsGroup,
-    secondSourceId?: string
-) {
+interface SaveGroupQuestionsParams {
+    sampleId: string;
+    participantId: string;
+    groupQuestionsWithAnswers: IQuestionsGroup;
+}
+
+export async function saveGroupQuestions({
+    sampleId,
+    participantId,
+    groupQuestionsWithAnswers,
+}: SaveGroupQuestionsParams) {
     const { researcherDoc, sample } = await getSampleById({ sampleId });
     const participant = findParticipantById({ sample, participantId });
 
-    // // The participant is a second source
-    // if (secondSourceId) {
-    //     const secondSource = participant.secondSources?.find(
-    //         (secondSource) => secondSource._id?.toString() === secondSourceId
-    //     );
-
-    //     if (!secondSource) {
-    //         throw new Error("Second source not found.");
-    //     }
-
-    //     const groupWithPontuation = await calculatePontuation(groupQuestionsAndAnswers, EAdultFormSource.SECOND_SOURCE);
-
-    //     if (secondSource.adultFormAnswers) {
-    //         secondSource.adultFormAnswers?.push(groupWithPontuation);
-    //     } else {
-    //         secondSource.adultFormAnswers = [groupWithPontuation];
-    //     }
-
-    //     // Next FORM step.
-    //     // Form steps can be: 0 - 10 (see EAdultFormGroup)
-    //     // Group questions can be: 0 - 5 (see EAdultFormSteps)
-    //     secondSource.adultFormCurrentStep = QTT_STEP_BEFORE_GROUPS_QUESTIONS + groupWithPontuation.sequence + 1;
-
-    //     let returnValue: IGroupQuestionsWithoutPoints | boolean = true;
-
-    //     // Last group
-    //     if (groupWithPontuation.sequence === EAdultFormGroup.ARTISTIC_ACTIVITIES) {
-    //         // Jump autobiography
-    //         secondSource.adultFormCurrentStep = EAdultFormSteps.FINISHED;
-    //         secondSource.endFillFormDate = new Date().toISOString();
-    //     } else {
-    //         returnValue = await getQuestionsByGroup(EAdultFormSource.SECOND_SOURCE, groupWithPontuation.sequence + 1);
-    //     }
-
-    //     await researcherDoc.save();
-
-    //     return returnValue;
-    // }
-
-    const groupWithPontuation = await calculatePunctuation(groupQuestionsAndAnswers, EAdultFormSource.FIRST_SOURCE);
+    const groupWithPontuation = await calculatePunctuation(groupQuestionsWithAnswers, EAdultFormSource.FIRST_SOURCE);
 
     if (participant.adultForm?.answersByGroup) {
         const idxFromGroupAlreadyAdded = participant.adultForm?.answersByGroup?.findIndex(
             (group) => group.sequence === groupWithPontuation.sequence
         );
-
-        console.log(idxFromGroupAlreadyAdded);
 
         if (idxFromGroupAlreadyAdded > -1) {
             participant.adultForm.answersByGroup[idxFromGroupAlreadyAdded] = groupWithPontuation;
@@ -102,7 +79,71 @@ export async function saveGroupQuestions(
         return true;
     }
 
-    return getQuestionsByGroup(EAdultFormSource.FIRST_SOURCE, groupWithPontuation.sequence + 1);
+    return getQuestionsByGroup({
+        sourceForm: EAdultFormSource.FIRST_SOURCE,
+        groupSequence: groupWithPontuation.sequence + 1,
+    });
+}
+
+interface SaveSecondSourceGroupQuestionsParams {
+    secondSourceId: string;
+    sampleId: string;
+    participantId: string;
+    groupQuestionsWithAnswers: IQuestionsGroup;
+}
+
+/**
+ * The `saveSecondSourceGroupQuestions` function saves the answers of a second source for a specific
+ * group of questions in a research sample.
+ * @param {string} params.secondSourceId - The ID of the second source object.
+ * @param {string} params.sampleId - The ID of a sample.
+ * @param {string} params.participantId - The Id of the participant that owns the second source.
+ * @param {IQuestionsGroup} params.groupQuestionsWithAnswers - An object of type `IQuestionsGroup`.
+ * It represents the questions and answers for a specific group in the form.
+ * @returns a boolean value if the last group was save. Otherwise, returns the next group of questions.
+ */
+export async function saveSecondSourceGroupQuestions({
+    secondSourceId,
+    sampleId,
+    participantId,
+    groupQuestionsWithAnswers,
+}: SaveSecondSourceGroupQuestionsParams) {
+    const { researcherDoc, sample } = await getSampleById({ sampleId });
+    const participant = findParticipantById({ sample, participantId });
+
+    let secondSource = findSecondSourceById({ participant: participant as IParticipant, secondSourceId });
+
+    const groupWithPontuation = await calculatePunctuation(groupQuestionsWithAnswers, EAdultFormSource.SECOND_SOURCE);
+
+    if (!secondSource.adultForm) {
+        throw new Error("Second source object haven't a adulForm object, then he don't start fill out the form.");
+    }
+
+    if (!secondSource.adultForm.answersByGroup) {
+        secondSource.adultForm.answersByGroup = [];
+    }
+
+    const idxFormGroupAlreadyAdded = secondSource.adultForm.answersByGroup.findIndex(
+        (group) => group.sequence === groupWithPontuation.sequence
+    );
+
+    if (idxFormGroupAlreadyAdded > -1) {
+        secondSource.adultForm.answersByGroup[idxFormGroupAlreadyAdded] = groupWithPontuation;
+    } else {
+        secondSource.adultForm.answersByGroup.push(groupWithPontuation);
+    }
+
+    await researcherDoc.save();
+
+    // Last group
+    if (groupWithPontuation.sequence === EAdultFormGroup.ARTISTIC_ACTIVITIES) {
+        return true;
+    }
+
+    return getQuestionsByGroup({
+        sourceForm: EAdultFormSource.SECOND_SOURCE,
+        groupSequence: groupWithPontuation.sequence + 1,
+    });
 }
 
 /**
