@@ -13,7 +13,7 @@ import {
 
 export async function createSampleHandler(req: Request<{}, {}, CreateSampleDTO["body"], {}>, res: Response) {
     try {
-        const researcherId = res.locals.session?.researcherId;
+        const researcherId = res.locals.researcherId;
 
         if (!researcherId) {
             throw new Error("Invalid session!");
@@ -51,7 +51,7 @@ export async function editSampleHandler(
     res: Response
 ) {
     try {
-        const researcherId = res.locals.session?.researcherId;
+        const researcherId = res.locals.researcherId;
 
         if (!researcherId) {
             throw new Error("Invalid session!");
@@ -89,7 +89,7 @@ export async function paginateResearcherSamples(
     res: Response
 ) {
     try {
-        const researcherId = res.locals.session?.researcherId;
+        const researcherId = res.locals.researcherId;
 
         if (!researcherId) {
             throw new Error("Invalid session!");
@@ -114,7 +114,7 @@ export async function paginateAllSamples(
     res: Response
 ) {
     try {
-        const researcherId = res.locals.session?.researcherId;
+        const researcherId = res.locals.researcherId;
 
         if (!researcherId) {
             throw new Error("Invalid session!");
@@ -136,7 +136,7 @@ export async function paginateAllSamples(
 
 export async function deleteSample(req: Request<DeleteSampleDTO["params"], {}, {}, {}>, res: Response) {
     try {
-        const researcherId = res.locals.session?.researcherId;
+        const researcherId = res.locals.researcherId;
 
         if (!researcherId) {
             throw new Error("Invalid session!");

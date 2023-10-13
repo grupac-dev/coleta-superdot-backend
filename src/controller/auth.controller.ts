@@ -87,7 +87,7 @@ export async function userRoleHandler(req: Request<UserRoleDTO["params"], {}, {}
 
 export async function setUserRoleHandler(req: Request<{}, {}, SetUserRoleDTO["body"], {}>, res: Response) {
     try {
-        const adm = await ResearcherService.findResearcher({ _id: res.locals.session?.researcherId });
+        const adm = await ResearcherService.findResearcher({ _id: res.locals.researcherId });
 
         if (!adm) {
             throw new Error("Invalid session!");

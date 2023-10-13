@@ -14,7 +14,7 @@ export async function updateResearcherHandler(req: Request<{}, {}, UpdateResearc
             newResearcherData.passwordHash = hashContent(req.body.password);
         }
 
-        const researcherId = res.locals.session?.researcherId;
+        const researcherId = res.locals.researcherId;
 
         if (!researcherId) {
             throw new Error("Invalid session!");
@@ -38,7 +38,7 @@ export async function paginateResearchers(
     res: Response
 ) {
     try {
-        const researcherId = res.locals.session?.researcherId;
+        const researcherId = res.locals.researcherId;
 
         if (!researcherId) {
             throw new Error("Invalid session!");
