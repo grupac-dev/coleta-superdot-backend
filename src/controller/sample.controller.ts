@@ -10,6 +10,7 @@ import {
     PaginateAllSampleDTO,
     PaginateSampleDTO,
 } from "../dto/sample.dto";
+import { AddParticipantsDTO } from "../dto/sample/addParticipants.dto";
 
 export async function createSampleHandler(req: Request<{}, {}, CreateSampleDTO["body"], {}>, res: Response) {
     try {
@@ -185,5 +186,24 @@ export async function handlerGetParticipantRegistrationProgress(
 
         // TO DO errors handlers
         res.status(409).json(e);
+    }
+}
+
+export async function handlerAddParticipants(
+    req: Request<AddParticipantsDTO["params"], {}, AddParticipantsDTO["body"], {}>,
+    res: Response
+) {
+    try {
+        const { sampleId } = req.params;
+        const { participants } = req.body;
+
+        const indicated = await SampleService.addParticipants({ sampleId, participants });
+
+        res.status(201).json(indicated);
+    } catch (e: any) {
+        console.error(e);
+
+        // TO DO errors handlers
+        res.status(409).send(e.message);
     }
 }

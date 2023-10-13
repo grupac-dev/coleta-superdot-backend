@@ -14,6 +14,7 @@ import { uploaderConfig } from "../util/uploader";
 import { requireRole } from "../middleware/requireRole.middleware";
 import { requireParticipantJWT } from "../middleware/requireParticipantJWT.middleware";
 import { requireResearcherJWT } from "../middleware/requireResearcherJWT.middleware";
+import { addParticipantsSchema } from "../dto/sample/addParticipants.dto";
 
 const sampleRouter = express.Router();
 
@@ -28,6 +29,7 @@ sampleRouter.post(
     [uploaderFields, validateDTO(createSampleDTO), requireResearcherJWT],
     SampleController.createSampleHandler
 );
+
 sampleRouter.put(
     "/updateSample/:sampleId",
     [uploaderFields, validateDTO(editSampleDTO), requireResearcherJWT],
@@ -65,6 +67,13 @@ sampleRouter.get(
     validateDTO(getParticipantRegistrationProgressDTO),
     requireResearcherJWT,
     SampleController.handlerGetParticipantRegistrationProgress
+);
+
+sampleRouter.post(
+    "/add-participants/sample/:sampleId",
+    validateDTO(addParticipantsSchema),
+    requireResearcherJWT,
+    SampleController.handlerAddParticipants
 );
 
 export { sampleRouter };
