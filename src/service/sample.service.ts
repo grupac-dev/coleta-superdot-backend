@@ -4,6 +4,8 @@ import ISample from "../interface/sample.interface";
 import ResearcherModel from "../model/researcher.model";
 import { ISampleParticipantSummay } from "../interface/sampleParticipantSummary";
 import { EAdultFormSteps, TParticipantFormProgress } from "../util/consts";
+import { IParticipant } from "../interface/participant.interface";
+import { dispatchParticipantIndicationEmail } from "../util/emailSender.util";
 
 interface GetSampleByIdParams {
     sampleId: string;
@@ -303,4 +305,59 @@ export async function getParticipantRegistrationProgress(
     });
 
     return summary;
+}
+
+interface AddParticipantsParams {
+    sampleId: string;
+    participants: ISample["participants"];
+}
+
+/**
+ * Add a array of participants inside a sample.
+ * @param {AddParticipantsParams} Object
+ * @param {string} Object.sampleId - The ID of sample to add the participants
+ * @param {ISample["participants"]} Object.participants - The array of new participants
+ * @returns a boolean value if the participants was added to the sample.
+ */
+export async function addParticipants({ sampleId, participants }: AddParticipantsParams) {
+    const { researcherDoc, sample } = await getSampleById({ sampleId });
+
+    if (sample.status !== "Autorizado" || !sample.qttParticipantsAuthorized) {
+        throw new Error("This sample was not authorized!");
+    }
+
+    const participantsFiltered = participants?.filter((newParticipant) => {
+        if (!newParticipant.personalData?.email?.length || !newParticipant.personalData?.fullName?.length) {
+            return false;
+        }
+
+        return sample.participants?.every(
+            (participant) => participant.personalData?.email !== newParticipant.personalData?.email
+        );
+    });
+
+    if (!participantsFiltered?.length) throw new Error("Participants already added!");
+
+    if (sample.participants) {
+        sample.participants.push(...participantsFiltered);
+    } else {
+        sample.participants = [...participantsFiltered];
+    }
+
+    if (sample.participants?.length > sample.qttParticipantsAuthorized)
+        throw new Error("The new participants quantity is greater then the quantity allowed to this sample.");
+
+    await researcherDoc.save();
+
+    participantsFiltered?.forEach((participant) => {
+        dispatchParticipantIndicationEmail({
+            participantEmail: participant.personalData?.email as string,
+            participantName: participant.personalData?.fullName as string,
+            researcherEmail: researcherDoc.email,
+            researcherName: researcherDoc.personalData.fullName,
+            sampleId,
+        });
+    });
+
+    return true;
 }
