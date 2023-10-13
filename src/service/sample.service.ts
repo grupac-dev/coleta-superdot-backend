@@ -2,15 +2,19 @@ import mongoose from "mongoose";
 import { Page } from "../interface/page.interface";
 import ISample from "../interface/sample.interface";
 import ResearcherModel from "../model/researcher.model";
-import { ISampleParticipantSummay } from "../interface/sampleParticipantSummary";
-import { EAdultFormSteps, TParticipantFormProgress } from "../util/consts";
-import { IParticipant } from "../interface/participant.interface";
 import { dispatchParticipantIndicationEmail } from "../util/emailSender.util";
 
 interface GetSampleByIdParams {
     sampleId: string;
 }
 
+/**
+ * The function `getSampleById` retrieves a sample by its ID from a researcher document.
+ * @param {GetSampleByIdParams} Object
+ * @param {string} Object.sampleId The ID of the sample to retrieve.
+ * @returns an object with two properties: "researcherDoc" and "sample". The researcher doc
+ * allow to make changes in the doc and save it.
+ */
 export async function getSampleById({ sampleId }: GetSampleByIdParams) {
     if (!mongoose.Types.ObjectId.isValid(sampleId)) {
         throw new Error("Sample id is invalid.");
@@ -268,43 +272,6 @@ export async function getRequiredDocs(sampleId: string) {
     }
 
     return docs;
-}
-
-export async function getParticipantRegistrationProgress(
-    sampleId: string
-): Promise<ISampleParticipantSummay[] | undefined> {
-    if (!mongoose.Types.ObjectId.isValid(sampleId)) {
-        throw new Error("Sample id is invalid.");
-    }
-
-    const researcherDoc = await ResearcherModel.findOne({ "researchSamples._id": sampleId });
-
-    if (!researcherDoc || !researcherDoc.researchSamples) {
-        throw new Error("Sample not found.");
-    }
-
-    const sample = researcherDoc.researchSamples.find((sample) => sample._id?.toString() === sampleId);
-
-    if (!sample) {
-        throw new Error("Sample not found.");
-    }
-
-    const summary = sample.participants?.map((participant) => {
-        let progress: TParticipantFormProgress = "Preenchendo";
-
-        return {
-            sampleId: sample._id as string,
-            participantId: participant._id as string,
-            fullName: participant.personalData?.fullName || "",
-            progress,
-            qttSecondSources: participant.secondSources?.length || 0,
-            startDate: participant.createdAt as Date,
-            endDate: new Date(),
-            giftednessIndicators: participant.giftdnessIndicators,
-        };
-    });
-
-    return summary;
 }
 
 interface AddParticipantsParams {

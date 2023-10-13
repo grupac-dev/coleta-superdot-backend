@@ -4,7 +4,6 @@ import {
     createSampleDTO,
     deleteSampleDTO,
     editSampleDTO,
-    getParticipantRegistrationProgressDTO,
     getRequiredDocsDTO,
     paginateAllSampleDTO,
     paginateSampleDTO,
@@ -60,13 +59,6 @@ sampleRouter.delete(
     "/deleteSample/:sampleId",
     [validateDTO(deleteSampleDTO), requireResearcherJWT],
     SampleController.deleteSample
-);
-
-sampleRouter.get(
-    "/participantRegistrationProgress/:sampleId",
-    validateDTO(getParticipantRegistrationProgressDTO),
-    requireResearcherJWT,
-    SampleController.handlerGetParticipantRegistrationProgress
 );
 
 sampleRouter.post(
