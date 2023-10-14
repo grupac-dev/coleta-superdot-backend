@@ -5,12 +5,12 @@ import {
     CreateSampleDTO,
     DeleteSampleDTO,
     EditSampleDTO,
-    GetParticipantRegistrationProgressDTO,
     GetRequiredDocsDTO,
     PaginateAllSampleDTO,
     PaginateSampleDTO,
 } from "../dto/sample.dto";
 import { AddParticipantsDTO } from "../dto/sample/addParticipants.dto";
+import { GetSampleByIdDTO } from "../dto/sample/getSampleById.dto";
 
 export async function createSampleHandler(req: Request<{}, {}, CreateSampleDTO["body"], {}>, res: Response) {
     try {
@@ -171,24 +171,6 @@ export async function handlerGetRequiredDocs(req: Request<GetRequiredDocsDTO["pa
     }
 }
 
-export async function handlerGetParticipantRegistrationProgress(
-    req: Request<GetParticipantRegistrationProgressDTO["params"], {}, {}, {}>,
-    res: Response
-) {
-    try {
-        const sampleId = req.params.sampleId;
-
-        const participants = await SampleService.getParticipantRegistrationProgress(sampleId);
-
-        res.status(200).json(participants);
-    } catch (e) {
-        console.error(e);
-
-        // TO DO errors handlers
-        res.status(409).json(e);
-    }
-}
-
 export async function handlerAddParticipants(
     req: Request<AddParticipantsDTO["params"], {}, AddParticipantsDTO["body"], {}>,
     res: Response
@@ -200,6 +182,21 @@ export async function handlerAddParticipants(
         const indicated = await SampleService.addParticipants({ sampleId, participants });
 
         res.status(201).json(indicated);
+    } catch (e: any) {
+        console.error(e);
+
+        // TO DO errors handlers
+        res.status(409).send(e.message);
+    }
+}
+
+export async function handlerGetSampleById(req: Request<GetSampleByIdDTO["params"], {}, {}, {}>, res: Response) {
+    try {
+        const { sampleId } = req.params;
+
+        const { sample } = await SampleService.getSampleById({ sampleId });
+
+        res.status(200).json(sample);
     } catch (e: any) {
         console.error(e);
 

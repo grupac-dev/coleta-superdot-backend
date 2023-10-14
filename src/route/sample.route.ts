@@ -14,6 +14,7 @@ import { requireRole } from "../middleware/requireRole.middleware";
 import { requireParticipantJWT } from "../middleware/requireParticipantJWT.middleware";
 import { requireResearcherJWT } from "../middleware/requireResearcherJWT.middleware";
 import { addParticipantsSchema } from "../dto/sample/addParticipants.dto";
+import { getSampleByIdSchema } from "../dto/sample/getSampleById.dto";
 
 const sampleRouter = express.Router();
 
@@ -66,6 +67,13 @@ sampleRouter.post(
     validateDTO(addParticipantsSchema),
     requireResearcherJWT,
     SampleController.handlerAddParticipants
+);
+
+sampleRouter.get(
+    "/get-sample-by-id/:sampleId",
+    validateDTO(getSampleByIdSchema),
+    requireResearcherJWT,
+    SampleController.handlerGetSampleById
 );
 
 export { sampleRouter };
