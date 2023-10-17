@@ -48,6 +48,9 @@ export interface IParticipant {
         endFillFormAt?: Date;
         startFillFormAt?: Date;
         answersByGroup?: { groupName: string; sequence: EAdultFormGroup; questions: IQuestion[] }[];
+        totalPunctuation?: number;
+        giftednessIndicators?: boolean;
+        knowledgeAreas?: string[];
     };
     autobiography?: {
         text?: string;
