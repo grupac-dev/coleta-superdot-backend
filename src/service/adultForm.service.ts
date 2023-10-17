@@ -9,6 +9,9 @@ import { findSecondSourceById } from "./secondSource.service";
 import { IParticipant } from "../interface/participant.interface";
 import { PartialDeep } from "type-fest";
 
+const KNOWLEDGE_QUESTION_INDEX_AT_FIRST_SOURCE_FORM = 6;
+const KNOWLEDGE_QUESTION_INDEX_AT_SECOND_SOURCE_FORM = 10;
+
 interface GetQuestionsByGroupParams {
     sourceForm: EAdultFormSource;
     groupSequence: EAdultFormGroup;
@@ -57,28 +60,42 @@ export async function saveGroupQuestions({
     const { researcherDoc, sample } = await getSampleById({ sampleId });
     const participant = findParticipantById({ sample, participantId });
 
-    const groupWithPontuation = await calculatePunctuation(groupQuestionsWithAnswers, EAdultFormSource.FIRST_SOURCE);
-
-    if (participant.adultForm?.answersByGroup) {
-        const idxFromGroupAlreadyAdded = participant.adultForm?.answersByGroup?.findIndex(
-            (group) => group.sequence === groupWithPontuation.sequence
-        );
-
-        if (idxFromGroupAlreadyAdded > -1) {
-            participant.adultForm.answersByGroup[idxFromGroupAlreadyAdded] = groupWithPontuation;
-        } else {
-            participant.adultForm.answersByGroup.push(groupWithPontuation);
-        }
-    } else {
-        participant.adultForm?.answersByGroup?.push(groupWithPontuation);
+    if (!participant.adultForm) {
+        throw new Error("Participant object haven't a adulForm object, then he don't start fill out the form.");
     }
 
-    await researcherDoc.save();
+    const groupWithPontuation = await calculatePunctuation(groupQuestionsWithAnswers, EAdultFormSource.FIRST_SOURCE);
+
+    if (!participant.adultForm.answersByGroup) {
+        participant.adultForm.answersByGroup = [];
+    }
+
+    const idxFromGroupAlreadyAdded = participant.adultForm?.answersByGroup?.findIndex(
+        (group) => group.sequence === groupWithPontuation.sequence
+    );
+
+    if (idxFromGroupAlreadyAdded > -1) {
+        participant.adultForm.answersByGroup[idxFromGroupAlreadyAdded] = groupWithPontuation;
+    } else {
+        participant.adultForm.answersByGroup.push(groupWithPontuation);
+    }
+
+    if (groupWithPontuation.sequence === EAdultFormGroup.GENERAL_CHARACTERISTICS) {
+        participant.adultForm.knowledgeAreas = groupWithPontuation.questions.at(
+            KNOWLEDGE_QUESTION_INDEX_AT_FIRST_SOURCE_FORM
+        )?.answer as string[];
+    }
 
     // Last group
     if (groupWithPontuation.sequence === EAdultFormGroup.ARTISTIC_ACTIVITIES) {
+        participant.adultForm.totalPunctuation = calculateTotalPunctuation({
+            participantAnswers: participant.adultForm.answersByGroup,
+        });
+        await researcherDoc.save();
         return true;
     }
+
+    await researcherDoc.save();
 
     return getQuestionsByGroup({
         sourceForm: EAdultFormSource.FIRST_SOURCE,
@@ -134,9 +151,19 @@ export async function saveSecondSourceGroupQuestions({
         secondSource.adultForm.answersByGroup.push(groupWithPontuation);
     }
 
+    if (groupWithPontuation.sequence === EAdultFormGroup.GENERAL_CHARACTERISTICS) {
+        secondSource.adultForm.knowledgeAreas = groupWithPontuation.questions.at(
+            KNOWLEDGE_QUESTION_INDEX_AT_SECOND_SOURCE_FORM
+        )?.answer as string[];
+    }
+
     // Last group
     if (groupWithPontuation.sequence === EAdultFormGroup.ARTISTIC_ACTIVITIES) {
         secondSource.adultForm.endFillFormAt = new Date();
+        secondSource.adultForm.totalPunctuation = calculateTotalPunctuation({
+            participantAnswers: secondSource.adultForm.answersByGroup,
+        });
+        participant.adultForm!.giftednessIndicators = verifyParticipantGiftednessIndicators({ participant });
         await researcherDoc.save();
         return true;
     }
@@ -146,6 +173,45 @@ export async function saveSecondSourceGroupQuestions({
     return getQuestionsByGroup({
         sourceForm: EAdultFormSource.SECOND_SOURCE,
         groupSequence: groupWithPontuation.sequence + 1,
+    });
+}
+
+const MAX_ADULT_FORM_FIRST_SOURCE_PUNCTUATION = 242;
+const MAX_ADULT_FORM_SEC_SOURCE_PUNCTUATION = 246;
+const MIN_PERCENTAGE_TO_HAVE_GIFTEDNESS_INDICATORS = 0.7;
+
+interface VerifyParticipantGiftednessIndicatorsParams {
+    participant: PartialDeep<IParticipant>;
+}
+
+/**
+ * Check if a participant has giftedness indicators based on their performance on the
+ * adult form questionnaire. The participant (and all your second sources) must have obtained
+ * 70% of the adult form punctuation to, maybe, have giftedness indicators.
+ * @param {VerifyParticipantGiftednessIndicatorsParams} Object
+ * @param {PartialDeep<IParticipant>} Object.participant - The participant object.
+ * @returns a boolean value. It returns true if the participant has met the criteria for having
+ * giftedness indicators, and false otherwise.
+ */
+export function verifyParticipantGiftednessIndicators({ participant }: VerifyParticipantGiftednessIndicatorsParams) {
+    const minFirstSourcePunctuation =
+        MIN_PERCENTAGE_TO_HAVE_GIFTEDNESS_INDICATORS * MAX_ADULT_FORM_FIRST_SOURCE_PUNCTUATION;
+
+    const participantPunctuation = participant.adultForm?.totalPunctuation ?? 0;
+    if (participantPunctuation < minFirstSourcePunctuation) {
+        return false;
+    }
+
+    const minSecSourcePunctuation =
+        MIN_PERCENTAGE_TO_HAVE_GIFTEDNESS_INDICATORS * MAX_ADULT_FORM_SEC_SOURCE_PUNCTUATION;
+
+    return participant.secondSources?.every((secSource) => {
+        const secSourcePunctuation = secSource.adultForm?.totalPunctuation ?? 0;
+        if (secSourcePunctuation < minSecSourcePunctuation) {
+            return false;
+        }
+
+        return true;
     });
 }
 
@@ -171,7 +237,7 @@ export async function calculatePunctuation(participantAnswers: IQuestionsGroup, 
     }
 
     const questionsWithPontuation = participantAnswers.questions.map((question) => {
-        const questionInDB = group.questions.find((questionDB) => questionDB._id === question._id);
+        const questionInDB = group.questions.find((questionDB) => String(questionDB._id) === String(question._id));
 
         if (!questionInDB) return question;
 
@@ -188,6 +254,29 @@ export async function calculatePunctuation(participantAnswers: IQuestionsGroup, 
         ...participantAnswers,
         questions: questionsWithPontuation,
     };
+}
+
+interface CalculateTotalPunctuationParams {
+    participantAnswers: IQuestionsGroup[];
+}
+
+/**
+ * The function calculates the total punctuation for a participant's answers.
+ * @param {CalculateTotalPunctuationParams} Object
+ * @param {IQuestionsGroup[]} Object.participantAnswers - The parameter `participantAnswers` is an array of
+ * objects of type `IQuestionsGroup`. Each `IQuestionsGroup` object represents a group of questions
+ * answered by a participant.
+ * @returns the total points calculated from the participant's answers.
+ */
+export function calculateTotalPunctuation({ participantAnswers }: CalculateTotalPunctuationParams) {
+    let totalPoints = 0;
+    participantAnswers.forEach((group) => {
+        group.questions.forEach((question) => {
+            totalPoints += question.answerPoints || 0;
+        });
+    });
+
+    return totalPoints;
 }
 
 interface FinishFormParams {
