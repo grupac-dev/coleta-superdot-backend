@@ -15,6 +15,7 @@ import { requireParticipantJWT } from "../middleware/requireParticipantJWT.middl
 import { requireResearcherJWT } from "../middleware/requireResearcherJWT.middleware";
 import { addParticipantsSchema } from "../dto/sample/addParticipants.dto";
 import { getSampleByIdSchema } from "../dto/sample/getSampleById.dto";
+import * as path from "path";
 
 const sampleRouter = express.Router();
 
@@ -54,7 +55,7 @@ sampleRouter.get(
     SampleController.handlerGetRequiredDocs
 );
 
-sampleRouter.use("/attachment", express.static("src/storage/uploads"));
+sampleRouter.use("/attachment", express.static(path.resolve(__dirname, "../", "storage/uploads/")));
 
 sampleRouter.delete(
     "/deleteSample/:sampleId",
