@@ -27,6 +27,8 @@ export interface ISecondSource {
         endFillFormAt?: Date;
         startFillFormAt?: Date;
         answersByGroup?: { groupName: string; sequence: EAdultFormGroup; questions: IQuestion[] }[];
+        totalPunctuation?: number;
+        knowledgeAreas?: string[];
     };
     teacherSubject?: string;
     createdAt?: string;

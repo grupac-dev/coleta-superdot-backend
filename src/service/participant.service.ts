@@ -56,6 +56,14 @@ export async function sendEmailVerification({ participantEmail, sampleId }: Send
     const verificationCode = crypto.randomBytes(128).toString("hex");
 
     const { researcherDoc, sample } = await getSampleById({ sampleId });
+
+    if (sample.status !== "Autorizado" || !sample.qttParticipantsAuthorized) {
+        throw new Error("This sample was not authorized!");
+    }
+
+    if ((sample.participants?.length || 0) + 1 > sample.qttParticipantsAuthorized)
+        throw new Error("This sample is full of participants.");
+
     let participant = findParticipantByEmail({ sample, participantEmail });
 
     if (participant?.adultForm?.endFillFormAt) {

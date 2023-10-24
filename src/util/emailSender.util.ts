@@ -171,3 +171,37 @@ export const dispatchNewRoleEmail = (body: IEmailNewRole) => {
         .then(console.log)
         .catch(console.error);
 };
+
+interface IEmailParticipantIndication {
+    participantEmail: string;
+    participantName: string;
+    researcherName: string;
+    researcherEmail: string;
+    sampleId: string;
+}
+
+export const dispatchParticipantIndicationEmail = ({
+    participantEmail,
+    participantName,
+    researcherName,
+    researcherEmail,
+    sampleId,
+}: IEmailParticipantIndication) => {
+    email
+        .send({
+            template: "participantIndication",
+            message: {
+                to: participantEmail,
+                subject: "Você foi convidado para participar de uma pesquisa!",
+            },
+            locals: {
+                participantEmail: participantEmail,
+                participantName: participantName,
+                researcherEmail: researcherEmail,
+                researcherName: researcherName,
+                formURL: `${env.FRONT_END_URL}/formulario-adulto/${sampleId}`,
+            },
+        })
+        .then(console.log)
+        .catch(console.error);
+};

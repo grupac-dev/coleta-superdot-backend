@@ -11,7 +11,7 @@ export const protectResource = async (req: Request, res: Response, next: NextFun
     if (fileName.startsWith("/")) {
         fileName = fileName.substring(1);
     }
-    const researcherId = res.locals.session?.researcherId;
+    const researcherId = res.locals.researcherId;
 
     if (!researcherId) {
         return res.status(403).send("This resource require a valid session.");

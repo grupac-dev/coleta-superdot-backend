@@ -67,7 +67,7 @@ export async function sendEmailVerification({
 
     let secondSource = findSecondSourceByEmail({ participant: participant as IParticipant, secondSourceEmail });
 
-    if (!secondSource?.adultForm?.endFillFormAt) {
+    if (secondSource?.adultForm?.endFillFormAt) {
         throw new Error("This second source already finished the adult form.");
     }
 

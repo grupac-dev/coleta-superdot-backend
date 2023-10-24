@@ -2,13 +2,19 @@ import mongoose from "mongoose";
 import { Page } from "../interface/page.interface";
 import ISample from "../interface/sample.interface";
 import ResearcherModel from "../model/researcher.model";
-import { ISampleParticipantSummay } from "../interface/sampleParticipantSummary";
-import { EAdultFormSteps, TParticipantFormProgress } from "../util/consts";
+import { dispatchParticipantIndicationEmail } from "../util/emailSender.util";
 
 interface GetSampleByIdParams {
     sampleId: string;
 }
 
+/**
+ * The function `getSampleById` retrieves a sample by its ID from a researcher document.
+ * @param {GetSampleByIdParams} Object
+ * @param {string} Object.sampleId The ID of the sample to retrieve.
+ * @returns an object with two properties: "researcherDoc" and "sample". The researcher doc
+ * allow to make changes in the doc and save it.
+ */
 export async function getSampleById({ sampleId }: GetSampleByIdParams) {
     if (!mongoose.Types.ObjectId.isValid(sampleId)) {
         throw new Error("Sample id is invalid.");
@@ -268,39 +274,57 @@ export async function getRequiredDocs(sampleId: string) {
     return docs;
 }
 
-export async function getParticipantRegistrationProgress(
-    sampleId: string
-): Promise<ISampleParticipantSummay[] | undefined> {
-    if (!mongoose.Types.ObjectId.isValid(sampleId)) {
-        throw new Error("Sample id is invalid.");
+interface AddParticipantsParams {
+    sampleId: string;
+    participants: ISample["participants"];
+}
+
+/**
+ * Add a array of participants inside a sample.
+ * @param {AddParticipantsParams} Object
+ * @param {string} Object.sampleId - The ID of sample to add the participants
+ * @param {ISample["participants"]} Object.participants - The array of new participants
+ * @returns a boolean value if the participants was added to the sample.
+ */
+export async function addParticipants({ sampleId, participants }: AddParticipantsParams) {
+    const { researcherDoc, sample } = await getSampleById({ sampleId });
+
+    if (sample.status !== "Autorizado" || !sample.qttParticipantsAuthorized) {
+        throw new Error("This sample was not authorized!");
     }
 
-    const researcherDoc = await ResearcherModel.findOne({ "researchSamples._id": sampleId });
+    const participantsFiltered = participants?.filter((newParticipant) => {
+        if (!newParticipant.personalData?.email?.length || !newParticipant.personalData?.fullName?.length) {
+            return false;
+        }
 
-    if (!researcherDoc || !researcherDoc.researchSamples) {
-        throw new Error("Sample not found.");
-    }
-
-    const sample = researcherDoc.researchSamples.find((sample) => sample._id?.toString() === sampleId);
-
-    if (!sample) {
-        throw new Error("Sample not found.");
-    }
-
-    const summary = sample.participants?.map((participant) => {
-        let progress: TParticipantFormProgress = "Preenchendo";
-
-        return {
-            sampleId: sample._id as string,
-            participantId: participant._id as string,
-            fullName: participant.personalData?.fullName || "",
-            progress,
-            qttSecondSources: participant.secondSources?.length || 0,
-            startDate: participant.createdAt as Date,
-            endDate: new Date(),
-            giftednessIndicators: participant.giftdnessIndicators,
-        };
+        return sample.participants?.every(
+            (participant) => participant.personalData?.email !== newParticipant.personalData?.email
+        );
     });
 
-    return summary;
+    if (!participantsFiltered?.length) throw new Error("Participants already added!");
+
+    if (sample.participants) {
+        sample.participants.push(...participantsFiltered);
+    } else {
+        sample.participants = [...participantsFiltered];
+    }
+
+    if (sample.participants?.length > sample.qttParticipantsAuthorized)
+        throw new Error("The new participants quantity is greater then the quantity allowed to this sample.");
+
+    await researcherDoc.save();
+
+    participantsFiltered?.forEach((participant) => {
+        dispatchParticipantIndicationEmail({
+            participantEmail: participant.personalData?.email as string,
+            participantName: participant.personalData?.fullName as string,
+            researcherEmail: researcherDoc.email,
+            researcherName: researcherDoc.personalData.fullName,
+            sampleId,
+        });
+    });
+
+    return true;
 }

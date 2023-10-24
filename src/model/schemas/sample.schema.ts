@@ -139,6 +139,12 @@ export const sampleSchema = new Schema<ISample>(
                 adultForm: {
                     endFillFormAt: Date,
                     startFillFormAt: Date,
+                    totalPunctuation: Number,
+                    giftednessIndicators: Boolean,
+                    knowledgeAreas: {
+                        type: Array,
+                        of: String,
+                    },
                     answersByGroup: [
                         {
                             groupName: String,
@@ -189,6 +195,11 @@ export const sampleSchema = new Schema<ISample>(
                         adultForm: {
                             endFillFormAt: Date,
                             startFillFormAt: Date,
+                            totalPunctuation: Number,
+                            knowledgeAreas: {
+                                type: Array,
+                                of: String,
+                            },
                             answersByGroup: [
                                 {
                                     groupName: String,

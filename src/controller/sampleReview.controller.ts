@@ -8,7 +8,7 @@ export async function createSampleReviewHandler(
     res: Response
 ) {
     try {
-        const researcherId = res.locals.session?.researcherId;
+        const researcherId = res.locals.researcherId;
 
         if (!researcherId) {
             throw new Error("Invalid session!");
