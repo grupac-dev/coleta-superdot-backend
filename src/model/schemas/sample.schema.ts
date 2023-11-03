@@ -93,7 +93,6 @@ export const sampleSchema = new Schema<ISample>(
                         enum: MARITAL_STATUS_ARRAY,
                     },
                     job: String,
-                    occupation: String,
                     educationLevel: {
                         type: String,
                         enum: EDUCATION_LEVEL_ARRAY,
@@ -179,7 +178,6 @@ export const sampleSchema = new Schema<ISample>(
                                 enum: RELATIONSHIP_TIME_ARRAY,
                             },
                             job: String,
-                            occupation: String,
                             street: String,
                             district: String,
                             countryCity: String,

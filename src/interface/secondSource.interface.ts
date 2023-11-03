@@ -10,7 +10,6 @@ export interface ISecondSource {
         relationship: RelationshipsType;
         relationshipTime: TRelationshipTime;
         job: string;
-        occupation: string;
         street: string;
         district: string;
         countryCity: string;

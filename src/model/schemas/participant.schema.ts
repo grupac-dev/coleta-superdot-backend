@@ -36,10 +36,6 @@ export const participantSchema = new Schema<IParticipant>(
                 type: String,
                 required: [true, "Participant job is required!"],
             },
-            occupation: {
-                type: String,
-                required: [true, "Participant occupation is required!"],
-            },
             educationLevel: {
                 type: String,
                 enum: EDUCATION_LEVEL_ARRAY,
