@@ -33,7 +33,6 @@ export const secondSourceSchema = new Schema<ISecondSource>(
                 enum: RELATIONSHIP_TIME_ARRAY,
             },
             job: String,
-            occupation: String,
             street: String,
             district: String,
             countryCity: String,

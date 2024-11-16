@@ -45,7 +45,7 @@ export const DEVICES_ARRAY = ["TV", "TV Cabo", "Computador", "Telefone", "Celula
 
 export type DeviceType = (typeof DEVICES_ARRAY)[number];
 
-export const RELATIONSHIPS_ARRAY = ["Amigo", "Parente", "Professor"] as const;
+export const RELATIONSHIPS_ARRAY = ["Amigo(a)", "Parente", "Professor(a)", "Namorado(a)", "Colega de trabalho", "Outro"] as const;
 export type RelationshipsType = (typeof RELATIONSHIPS_ARRAY)[number];
 
 export enum EQuestionType {

@@ -267,7 +267,7 @@ export async function getRequiredDocs(sampleId: string) {
         docs.push({
             jsonFileKey: "tcleDocument",
             backendFileName: sample.researchCep.tcleDocument,
-            label: "Termo de Compromisso Livre e Esclarecido",
+            label: "Termo de Consentimento Livre e Esclarecido",
         });
     }
 
