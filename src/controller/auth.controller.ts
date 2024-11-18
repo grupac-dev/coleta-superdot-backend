@@ -9,7 +9,7 @@ import { Types } from "mongoose";
 import { LoginDTO, SetUserRoleDTO } from "../dto/auth.dto";
 import { UserRoleDTO } from "../dto/auth.dto";
 import { dispatchNewRoleEmail } from "../util/emailSender.util";
-import { RolesType } from "../util/consts";
+import { ROLES, RolesType } from "../util/consts";
 import { issueResearcherAccessToken, issueResearcherRefreshToken } from "../service/auth.service";
 
 export async function registerHandler(req: Request<{}, {}, ResearcherDTO["body"], {}>, res: Response) {
@@ -20,7 +20,7 @@ export async function registerHandler(req: Request<{}, {}, ResearcherDTO["body"]
             researcherData.personalData.profilePhoto = req.file.filename;
         }
 
-        researcherData.role = env.DEFAULT_APP_ROLE;
+        researcherData.role = ROLES[0]; // Pesquisador
 
         researcherData.passwordHash = hashContent(req.body.password);
 
